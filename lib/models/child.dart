@@ -1,12 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'enums.dart';
 
 part 'child.g.dart';
-
-enum Severity {
-  mild,
-  moderate,
-  severe,
-}
 
 @JsonSerializable()
 class Child {

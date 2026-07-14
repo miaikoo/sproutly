@@ -10,7 +10,10 @@ Recommendation _$RecommendationFromJson(Map<String, dynamic> json) =>
     Recommendation(
       activityId: json['activityId'] as String,
       recommendedRewardId: json['recommendedRewardId'] as String?,
-      recommendedPrompt: json['recommendedPrompt'] as String,
+      recommendedPrompt: $enumDecode(
+        _$PromptTypeEnumMap,
+        json['recommendedPrompt'],
+      ),
       confidence: (json['confidence'] as num).toDouble(),
       reason: json['reason'] as String,
     );
@@ -19,7 +22,13 @@ Map<String, dynamic> _$RecommendationToJson(Recommendation instance) =>
     <String, dynamic>{
       'activityId': instance.activityId,
       'recommendedRewardId': instance.recommendedRewardId,
-      'recommendedPrompt': instance.recommendedPrompt,
+      'recommendedPrompt': _$PromptTypeEnumMap[instance.recommendedPrompt]!,
       'confidence': instance.confidence,
       'reason': instance.reason,
     };
+
+const _$PromptTypeEnumMap = {
+  PromptType.visual: 'visual',
+  PromptType.voice: 'voice',
+  PromptType.text: 'text',
+};

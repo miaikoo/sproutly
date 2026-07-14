@@ -1,12 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'enums.dart';
 
 part 'user.g.dart';
-
-enum UserRole {
-  parent,
-  therapist,
-  teacher,
-}
 
 @JsonSerializable()
 class User {

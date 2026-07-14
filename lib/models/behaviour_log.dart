@@ -1,26 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'enums.dart';
 
 part 'behaviour_log.g.dart';
-
-enum Mood {
-  happy,
-  calm,
-  neutral,
-  anxious,
-  meltdown,
-}
-
-enum PromptType {
-  visual,
-  voice,
-  text,
-}
-
-enum TransitionDifficulty {
-  low,
-  medium,
-  high,
-}
 
 @JsonSerializable()
 class BehaviourLog {

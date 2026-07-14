@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'enums.dart';
 
 part 'activity.g.dart';
 
@@ -8,7 +9,7 @@ class Activity {
   final String title;
   final String icon;
 
-  final String category;
+  final ActivityCategory category;
 
   final DateTime startTime;
   final DateTime endTime;

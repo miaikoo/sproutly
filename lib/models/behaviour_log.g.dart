@@ -42,6 +42,7 @@ const _$MoodEnumMap = {
   Mood.calm: 'calm',
   Mood.neutral: 'neutral',
   Mood.anxious: 'anxious',
+  Mood.upset: 'upset',
   Mood.meltdown: 'meltdown',
 };
 

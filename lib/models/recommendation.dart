@@ -1,14 +1,19 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'enums.dart';
 
 part 'recommendation.g.dart';
 
 @JsonSerializable()
 class Recommendation {
+  final String id;
+
+  final String childId;
+
   final String activityId;
 
   final String? recommendedRewardId;
 
-  final String recommendedPrompt;
+  final PromptType recommendedPrompt;
 
   final double confidence;
 
