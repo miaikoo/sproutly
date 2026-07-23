@@ -10,6 +10,7 @@ import '../../features/profile/pages/profile_page.dart';
 import '../../features/settings/pages/settings_page.dart';
 
 import '../../features/sprout_plan/pages/board_page.dart';
+import '../../features/sprout_plan/pages/create_board_page.dart';
 import '../../features/sprout_plan/pages/board_detail_page.dart';
 import '../../features/sprout_plan/pages/activity_detail_page.dart';
 
@@ -39,7 +40,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.home,
-      builder: (_, __) => const HomePage(),
+      builder: (_, __) => const Home(),
     ),
     GoRoute(
       path: AppRoutes.profile,
@@ -52,6 +53,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.board,
       builder: (_, __) => const BoardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.createBoard,
+      builder: (_, __) => const CreateBoardPage(),
     ),
     GoRoute(
       path: AppRoutes.boardDetail,

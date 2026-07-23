@@ -1,30 +1,30 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:sprout_ly_app/main.dart';
+import 'package:sprout_ly_app/core/theme/app_colors.dart';
+import 'package:sprout_ly_app/features/home/pages/home_page.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('HomePage does not render a floating bottom navigation card', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: HomePage()));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(
+      find.byWidgetPredicate((widget) {
+        if (widget is! Container) {
+          return false;
+        }
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+        final decoration = widget.decoration;
+        if (decoration is! BoxDecoration) {
+          return false;
+        }
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+        final borderRadius = decoration.borderRadius;
+        return borderRadius is BorderRadius &&
+            borderRadius.topLeft == const Radius.circular(64) &&
+            borderRadius.topRight == const Radius.circular(64);
+      }),
+      findsNothing,
+    );
   });
 }

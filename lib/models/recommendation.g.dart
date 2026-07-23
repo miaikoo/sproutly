@@ -8,6 +8,8 @@ part of 'recommendation.dart';
 
 Recommendation _$RecommendationFromJson(Map<String, dynamic> json) =>
     Recommendation(
+      id: json['id'] as String,
+      childId: json['childId'] as String,
       activityId: json['activityId'] as String,
       recommendedRewardId: json['recommendedRewardId'] as String?,
       recommendedPrompt: $enumDecode(
@@ -20,6 +22,8 @@ Recommendation _$RecommendationFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$RecommendationToJson(Recommendation instance) =>
     <String, dynamic>{
+      'id': instance.id,
+      'childId': instance.childId,
       'activityId': instance.activityId,
       'recommendedRewardId': instance.recommendedRewardId,
       'recommendedPrompt': _$PromptTypeEnumMap[instance.recommendedPrompt]!,

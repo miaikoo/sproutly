@@ -38,6 +38,7 @@ class AppColors {
 
   // ===== Neutral =====
   static const white = Color(0xFFFCFCFB);
+  static const transparent = Color(0x00000000);
 
   static const neutral50 = Color(0xFFF8F8F4);
   static const neutral100 = Color(0xFFF2F5F4);

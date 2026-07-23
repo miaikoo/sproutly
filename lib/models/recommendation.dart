@@ -20,6 +20,8 @@ class Recommendation {
   final String reason;
 
   const Recommendation({
+    required this.id,
+    required this.childId,
     required this.activityId,
     required this.recommendedRewardId,
     required this.recommendedPrompt,

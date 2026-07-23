@@ -15,6 +15,9 @@ class AppRoutes {
   static const boardDetail = '/board/detail';
   static const activity = '/activity';
 
+  // Create board
+  static const createBoard = '/board/create';
+
   static const analytics = '/analytics';
   static const report = '/analytics/report';
 
