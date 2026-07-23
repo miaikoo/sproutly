@@ -13,6 +13,7 @@ import '../../features/sprout_plan/pages/board_page.dart';
 import '../../features/sprout_plan/pages/create_board_page.dart';
 import '../../features/sprout_plan/pages/create_activity_board_page.dart';
 import '../../features/sprout_plan/pages/create_schedule_board_page.dart';
+import '../../features/sprout_plan/pages/create_activity_page.dart';
 import '../../features/sprout_plan/pages/create_first_then_board_page.dart';
 
 import '../../features/sprout_plan/pages/board_detail_page.dart';
@@ -82,6 +83,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.createScheduleBoard,
       builder: (_, __) => const CreateScheduleBoardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.createActivity,
+      builder: (_, __) => const CreateActivityPage(),
     ),
     GoRoute(
       path: AppRoutes.createFirstThenBoard,
