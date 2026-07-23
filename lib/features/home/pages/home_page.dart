@@ -1,6 +1,9 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; 
+import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/widgets/bottom_nav.dart';
+import '../../../core/navigation/app_routes.dart'; 
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -21,168 +24,129 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
-                  _buildHeader(),
+                  const SizedBox(height: 16),
+                  _buildHeader(context), 
                   const SizedBox(height: 24),
                   const Text(
                     'Sedang dikerjakan',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 24,
+                      fontSize: 20,
                       fontFamily: 'Nunito',
                       fontWeight: FontWeight.w600,
-                      height: 1.33,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildCurrentTaskCard(),
                   const SizedBox(height: 32),
                   const Text(
                     'Papan saya',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 24,
+                      fontSize: 20,
                       fontFamily: 'Nunito',
                       fontWeight: FontWeight.w600,
-                      height: 1.33,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  _buildBoardGrid(),
                   const SizedBox(height: 16),
-                  const Center(
-                    child: Text(
-                      'Lihat semua',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w600,
-                        height: 1,
-                        letterSpacing: 0.14,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  _buildBoardGrid(),
                 ],
               ),
             ),
           ),
         ),
       ),
-      bottomNavigationBar: const BottomNav(),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: AppColors.neutral300,
-                  borderRadius: BorderRadius.circular(48),
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            // Avatar profile picture
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: AppColors.neutral300,
+              child: ClipOval(
+                child: SvgPicture.asset(
+                  'assets/images/profile_pic.svg',
+                  width: 64, 
+                  height: 64,
+                  fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 24),
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: AppColors.peach500,
-                  borderRadius: BorderRadius.circular(48),
-                ),
-              ),
-              const SizedBox(width: 24),
-              Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: AppColors.peach500,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 24),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Selamat pagi',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w400,
-                      height: 1.25,
-                    ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Selamat pagi',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w400,
                   ),
-                  SizedBox(height: 2),
-                  Text(
-                    'John Doe',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 30,
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w700,
-                      height: 1.20,
-                      letterSpacing: -0.45,
-                    ),
+                ),
+                Text(
+                  'John Doe',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 24,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.45,
                   ),
-                ],
-              ),
-            ],
-          ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.neutral800.withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(Icons.notifications_none, color: AppColors.neutral800.withOpacity(0.54)),
+          ],
+        ),
+        // Settings Routing
+        GestureDetector(
+          onTap: () {
+            context.push(AppRoutes.settings);
+          },
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: Colors.transparent, 
+            ),
+            child: const Icon(
+              Icons.settings, 
+              color: AppColors.neutral800,
+              size: 28,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildCurrentTaskCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral800.withOpacity(0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 80, 
+            height: 80,
             decoration: BoxDecoration(
               color: AppColors.neutral300,
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,37 +155,28 @@ class HomePage extends StatelessWidget {
                   'Sikat gigi',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 30,
+                    fontSize: 24,
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.w700,
-                    height: 1.20,
                     letterSpacing: -0.45,
                   ),
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 4),
                 Text(
                   'Rutinitas Pagi',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 20,
+                    fontSize: 16,
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.w400,
-                    height: 1.40,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.play_arrow, color: AppColors.neutral800.withOpacity(0.54)),
-          ),
+          const SizedBox(width: 8),
+          // Arrow chevron_right (mengikuti figma)
+          const Icon(Icons.chevron_right, color: AppColors.neutral800, size: 32),
         ],
       ),
     );
@@ -235,25 +190,26 @@ class HomePage extends StatelessWidget {
       _BoardData('Kesal', AppColors.cream100),
       _BoardData('Menunggu 5 menit', AppColors.cream300),
       _BoardData('Rutinitas Pagi', AppColors.steel300),
-      _BoardData('Kesal', AppColors.cream100),
-      _BoardData('Rutinitas Pagi', AppColors.steel300),
-      _BoardData('Menunggu 5 menit', AppColors.cream300),
-      _BoardData('Menunggu 5 menit', AppColors.cream300),
-      _BoardData('Rutinitas Pagi', AppColors.steel300),
-      _BoardData('Kesal', AppColors.cream100),
     ];
 
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: boardItems
-          .map(
-            (item) => _BoardCard(
-              title: item.title,
-              backgroundColor: item.backgroundColor,
-            ),
-          )
-          .toList(),
+    // Grid view
+    return GridView.builder(
+      shrinkWrap: true, 
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3, 
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16, 
+        childAspectRatio: 0.80,
+      ),
+      itemCount: boardItems.length,
+      itemBuilder: (context, index) {
+        final item = boardItems[index];
+        return _BoardCard(
+          title: item.title,
+          backgroundColor: item.backgroundColor,
+        );
+      },
     );
   }
 }
@@ -276,41 +232,43 @@ class _BoardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Container(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Card
+        Expanded(
+          child: Container(
             width: double.infinity,
-            height: 152,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.neutral300,
-              borderRadius: BorderRadius.circular(16),
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w600,
-                height: 1.40,
+            // Content placeholder
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.neutral300,
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        // Text
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w600,
+            height: 1.2,
+          ),
+        ),
+      ],
     );
   }
 }
-

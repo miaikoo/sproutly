@@ -1,5 +1,9 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/custom_icon.dart'; 
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -21,49 +25,46 @@ class SettingsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTitle(),
+                  _buildTitle(context),
                   const SizedBox(height: 24),
                   _buildProfileCard(),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 32),
+                  
                   _buildSection(
                     title: 'KARTU AKTIVITAS',
                     child: _buildCardAction(
+                      iconAsset: 'assets/icons/solar_running-2-bold.svg', 
                       title: 'Kelola aktivitas',
                       subtitle: 'Lihat dan edit kartu aktivitas',
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 24),
+                  
                   _buildSection(
                     title: 'AKSESIBILITAS',
                     child: _buildCardAction(
+                      iconAsset: 'assets/icons/solar_accessibility-bold.svg', 
                       title: 'Pengaturan Aksesibilitas',
                       subtitle: 'Ukuran icon, ukuran text, animasi, dan suara',
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 24),
+                  
                   _buildSection(
                     title: 'AKUN',
                     child: _buildCardAction(
+                      iconAsset: 'assets/icons/solar_shield-keyhole-minimalistic-bold.svg', 
                       title: 'Keamanan Akun',
                       subtitle: 'Ubah email dan password',
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 24),
+                  
                   _buildAboutSection(),
                   const SizedBox(height: 48),
+                  
                   _buildLogoutCard(),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: Container(
-                      width: 144,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.neutral800.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
@@ -73,19 +74,26 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle() {
+  Widget _buildTitle(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: const [
-          Icon(Icons.settings, size: 48, color: AppColors.neutral800),
-          SizedBox(width: 24),
-          Text(
+        children: [
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: const CustomIcon(
+              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
+              size: 28,
+              color: AppColors.neutral800,
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Text(
             'Pengaturan',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 36,
+              fontSize: 28,
               fontFamily: 'Nunito',
               fontWeight: FontWeight.w700,
               height: 1.17,
@@ -100,42 +108,27 @@ class SettingsPage extends StatelessWidget {
   Widget _buildProfileCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _sectionBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral800.withOpacity(0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: AppColors.neutral300,
-              borderRadius: BorderRadius.circular(48),
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: AppColors.neutral300,
+            child: ClipOval(
+              child: SvgPicture.asset(
+                'assets/images/profile_pic.svg', 
+                width: 72,
+                height: 72,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-          const SizedBox(width: 24),
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: AppColors.peach500,
-              borderRadius: BorderRadius.circular(48),
-            ),
-          ),
-          const SizedBox(width: 24),
-          Container(
-            width: 6.46,
-            height: 6.46,
-            decoration: const BoxDecoration(
-              color: AppColors.peach500,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,35 +137,29 @@ class SettingsPage extends StatelessWidget {
                   'John Doe',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 30,
+                    fontSize: 24,
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.w700,
-                    height: 1.20,
                     letterSpacing: -0.45,
                   ),
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 4),
                 Text(
                   'Ganti profil aktif',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 20,
+                    fontSize: 16,
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.w400,
-                    height: 1.40,
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.arrow_forward_ios, size: 20, color: AppColors.neutral800.withOpacity(0.54)),
+          const CustomIcon(
+            assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
+            size: 32,
+            color: AppColors.neutral800,
           ),
         ],
       ),
@@ -183,45 +170,41 @@ class SettingsPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w600,
-            height: 1.50,
-            letterSpacing: 0.56,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.56,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
         child,
       ],
     );
   }
 
-  Widget _buildCardAction({required String title, required String subtitle}) {
+  Widget _buildCardAction({required String iconAsset, required String title, required String subtitle}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _sectionBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral800.withOpacity(0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.settings, color: AppColors.neutral800.withOpacity(0.54)),
+          CustomIcon(
+            assetName: iconAsset,
+            size: 36,
+            color: AppColors.neutral800,
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,10 +213,9 @@ class SettingsPage extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 24,
+                    fontSize: 18,
                     fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w600,
-                    height: 1.33,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -241,23 +223,18 @@ class SettingsPage extends StatelessWidget {
                   subtitle,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 18,
+                    fontSize: 14,
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.w400,
-                    height: 1.33,
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.arrow_forward_ios, size: 20, color: AppColors.neutral800.withOpacity(0.54)),
+          const CustomIcon(
+            assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
+            size: 32,
+            color: AppColors.neutral800,
           ),
         ],
       ),
@@ -268,35 +245,34 @@ class SettingsPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'TENTANG',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w600,
-            height: 1.50,
-            letterSpacing: 0.56,
+        const Padding(
+          padding: EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'TENTANG',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.56,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: _sectionBackground,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.neutral800.withOpacity(0.2), width: 1),
           ),
           child: Column(
             children: [
-              _buildAboutItem('Tentang Sprout.ly'),
-              const SizedBox(height: 24),
-              _buildAboutItem('Kebijakan Privasi'),
-              const SizedBox(height: 24),
-              _buildAboutItem('Ketentuan Layanan'),
-              const SizedBox(height: 24),
-              _buildAboutItem('Dukungan Pelanggan'),
+              _buildAboutItem('assets/icons/ix_about.svg', 'Tentang Sprout.ly'),
+              Divider(height: 1, color: AppColors.neutral800.withOpacity(0.15), indent: 16, endIndent: 16),
+              _buildAboutItem('assets/icons/material-symbols_privacy-tip-outline-rounded.svg', 'Kebijakan Privasi'),
+              Divider(height: 1, color: AppColors.neutral800.withOpacity(0.15), indent: 16, endIndent: 16),
+              _buildAboutItem('assets/icons/material-symbols_text-snippet-outline-rounded.svg', 'Ketentuan Layanan'),
+              Divider(height: 1, color: AppColors.neutral800.withOpacity(0.15), indent: 16, endIndent: 16),
+              _buildAboutItem('assets/icons/material-symbols_support.svg', 'Dukungan Pelanggan'),
             ],
           ),
         ),
@@ -304,87 +280,70 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAboutItem(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16),
+  Widget _buildAboutItem(String iconAsset, String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          CustomIcon(
+            assetName: iconAsset,
+            size: 32,
+            color: AppColors.neutral800,
           ),
-          child: Icon(Icons.info_outline, color: AppColors.neutral800.withOpacity(0.54)),
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w600,
-              height: 1.33,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(16),
+          const CustomIcon(
+            assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
+            size: 28,
+            color: AppColors.neutral800,
           ),
-          child: Icon(Icons.arrow_forward_ios, size: 20, color: AppColors.neutral800.withOpacity(0.54)),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildLogoutCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _primaryActionColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral800.withOpacity(0.2), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.logout, color: AppColors.peach500),
+          const CustomIcon(
+            assetName: 'assets/icons/solar_exit-outline.svg',
+            size: 32,
+            color: AppColors.white,
           ),
-          const SizedBox(width: 24),
-          Expanded(
+          const SizedBox(width: 16),
+          const Expanded(
             child: Text(
               'Keluar',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.white,
-                fontSize: 24,
+                fontSize: 20,
                 fontFamily: 'Nunito',
                 fontWeight: FontWeight.w700,
-                height: 1.25,
-                letterSpacing: -0.24,
               ),
             ),
           ),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.arrow_forward_ios, size: 20, color: AppColors.peach500),
+          const CustomIcon(
+            assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
+            size: 32,
+            color: AppColors.white,
           ),
         ],
       ),
