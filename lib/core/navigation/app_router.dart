@@ -4,13 +4,20 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/pages/landing_page.dart';
 import '../../features/auth/pages/login_page.dart';
 import '../../features/auth/pages/register_page.dart';
+
 import '../../features/home/pages/home_page.dart';
 import '../../features/profile/pages/profile_page.dart';
 import '../../features/settings/pages/settings_page.dart';
+
 import '../../features/sprout_plan/pages/board_page.dart';
 import '../../features/sprout_plan/pages/create_board_page.dart';
+import '../../features/sprout_plan/pages/create_activity_board_page.dart';
+import '../../features/sprout_plan/pages/create_schedule_board_page.dart';
+import '../../features/sprout_plan/pages/create_first_then_board_page.dart';
+
 import '../../features/sprout_plan/pages/board_detail_page.dart';
 import '../../features/sprout_plan/pages/activity_detail_page.dart';
+
 import '../../features/sprout_buddy/pages/buddy_page.dart';
 import '../../features/sprout_track/pages/analytics_page.dart';
 import '../../features/sprout_track/pages/report_page.dart';
@@ -63,6 +70,24 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
 
+    // Routes for create board
+    GoRoute(
+      path: AppRoutes.createBoard,
+      builder: (_, __) => const CreateBoardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.createBoardActivity,
+      builder: (_, __) => const CreateActivityBoardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.createScheduleBoard,
+      builder: (_, __) => const CreateScheduleBoardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.createFirstThenBoard,
+      builder: (_, __) => const CreateFirstThenBoardPage(),
+    ),
+
     // Routes for other pages
     GoRoute(
       path: AppRoutes.profile,
@@ -71,10 +96,6 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.settings,
       builder: (_, __) => const SettingsPage(),
-    ),
-    GoRoute(
-      path: AppRoutes.createBoard,
-      builder: (_, __) => const CreateBoardPage(),
     ),
     GoRoute(
       path: AppRoutes.boardDetail,

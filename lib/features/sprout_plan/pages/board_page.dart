@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../shared/widgets/bottom_nav.dart';
+import '../../../shared/widgets/custom_icon.dart';
 
-class BoardPage extends StatelessWidget {
+class BoardPage extends StatefulWidget {
   const BoardPage({super.key});
+
+  @override
+  State<BoardPage> createState() => _BoardPageState();
+}
+
+class _BoardPageState extends State<BoardPage> {
+  String _selectedFilter = 'Semua';
 
   @override
   Widget build(BuildContext context) {
@@ -27,48 +35,17 @@ class BoardPage extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
+            constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(
               padding: AppSpacing.pagePadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppSpacing.gapSM,
-                  Text('Papan saya', style: AppTextStyles.displayXL),
+                  _buildHeader(context),
                   AppSpacing.gapMD,
                   _buildFilterChips(),
                   AppSpacing.gapXL,
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: [
-                      for (final d in items) SizedBox(width: 200, child: _BoardCard(data: d)),
-                      SizedBox(
-                        width: 200,
-                        child: GestureDetector(
-                          onTap: () => context.go(AppRoutes.createBoard),
-                          child: Container(
-                            height: 220,
-                            decoration: BoxDecoration(
-                              color: AppColors.peach100,
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: AppColors.peach500, width: 3),
-                            ),
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add, size: 36, color: AppColors.textPrimary),
-                                  AppSpacing.gapXS,
-                                  Text('Tambah Papan', style: AppTextStyles.headingM),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildBoardGrid(items),
                   AppSpacing.gapXXL,
                 ],
               ),
@@ -76,32 +53,79 @@ class BoardPage extends StatelessWidget {
           ),
         ),
       ),
-      // bottomNavigationBar: const BottomNav(),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Papan saya', style: AppTextStyles.displayXL),
+          GestureDetector(
+            onTap: () => context.push(AppRoutes.createBoard),
+            child: const CustomIcon(
+              assetName: 'assets/icons/solar_clipboard-add-outline.svg',
+              size: 32,
+              color: AppColors.peach500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildFilterChips() {
     final filters = ['Semua', 'Aktivitas', 'Menunggu', 'Emosi'];
-    return Row(
-      children: filters
-          .map(
-            (label) => Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Chip(
-                backgroundColor: label == 'Semua' ? AppColors.teal700 : AppColors.teal500,
-                label: Text(
-                  label,
-                  style: AppTextStyles.headingM.copyWith(color: AppColors.white),
-                ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: filters.map((label) {
+          final isSelected = _selectedFilter == label;
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedFilter = label),
+              child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF446860) : const Color(0xFF7EA29C),
+                  borderRadius: BorderRadius.circular(36),
+                ),
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 16,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
-          )
-          .toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 
+  Widget _buildBoardGrid(List<_BoardData> items) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        return _BoardCard(data: items[index]);
+      },
+    );
+  }
 }
 
 class _BoardData {
@@ -116,33 +140,40 @@ class _BoardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: data.background,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Container(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Expanded(
+          child: Container(
             width: double.infinity,
-            height: 152,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.neutral300,
-              borderRadius: BorderRadius.circular(16),
+              color: data.background,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.neutral300,
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            child: Text(
-              data.title,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.headingM,
-            ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          data.title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w600,
+            height: 1.2,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
-

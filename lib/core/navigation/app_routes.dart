@@ -17,6 +17,9 @@ class AppRoutes {
 
   // Create board
   static const createBoard = '/board/create';
+  static const createBoardActivity = '/board/create/activity';
+  static const createScheduleBoard = '/board/create/schedule';
+  static const createFirstThenBoard = '/board/create/first-then';
 
   static const analytics = '/analytics';
   static const report = '/analytics/report';
