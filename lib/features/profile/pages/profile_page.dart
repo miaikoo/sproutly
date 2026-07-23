@@ -1,11 +1,23 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:dotted_border/dotted_border.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/custom_icon.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  // Mock state 
+  String _activeProfile = 'John Doe';
 
   @override
   Widget build(BuildContext context) {
@@ -16,37 +28,39 @@ class ProfilePage extends StatelessWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: SingleChildScrollView(
-              padding: AppSpacing.pagePadding,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildAppBar(),
-                  AppSpacing.gapXXL,
+                  _buildAppBar(context),
+                  const SizedBox(height: 32),
+                  
+                  // Card Profile 1
                   _buildProfileCard(
                     name: 'John Doe',
-                    subtitle: 'Profil aktif',
-                    accentColor: AppColors.peach500,
-                    avatarColor: AppColors.neutral300,
-                    dotColor: AppColors.peach500,
-                    backgroundColor: AppColors.teal100,
-                    borderColor: AppColors.neutral800.withOpacity(0.2),
+                    isActive: _activeProfile == 'John Doe',
+                    onTap: () {
+                      setState(() {
+                        _activeProfile = 'John Doe';
+                      });
+                    },
                   ),
-                  AppSpacing.gapXXL,
+                  const SizedBox(height: 24),
+                  
+                  // Card Profile 2
                   _buildProfileCard(
                     name: 'Jane Doe',
-                    subtitle: null,
-                    accentColor: AppColors.steel300,
-                    avatarColor: AppColors.neutral300,
-                    dotColor: AppColors.steel300,
-                    backgroundColor: AppColors.teal100,
-                    borderColor: AppColors.neutral800.withOpacity(0.2),
-                    showIndicator: true,
-                    indicatorBorderColor: AppColors.peach500,
+                    isActive: _activeProfile == 'Jane Doe',
+                    onTap: () {
+                      setState(() {
+                        _activeProfile = 'Jane Doe';
+                      });
+                    },
                   ),
-                  AppSpacing.gapXXL,
+                  const SizedBox(height: 48),
+                  
                   _buildAddProfileCard(),
-                  AppSpacing.gapXXXL,
-                  _buildPageHandle(),
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
@@ -56,139 +70,128 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBar() {
-    return Row(
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.all(AppRadius.lg),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.neutral800.withOpacity(0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.person, color: AppColors.textPrimary),
-        ),
-        AppSpacing.gapHXL,
-        Text('Profil', style: AppTextStyles.displayL),
-        const Spacer(),
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.all(AppRadius.lg),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.neutral800.withOpacity(0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.more_vert, color: AppColors.textPrimary),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileCard({
-    required String name,
-    String? subtitle,
-    required Color accentColor,
-    required Color avatarColor,
-    required Color dotColor,
-    required Color backgroundColor,
-    required Color borderColor,
-    bool showIndicator = false,
-    Color indicatorBorderColor = AppColors.peach500,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.all(AppRadius.lg),
-        border: Border.all(color: borderColor, width: 1),
-      ),
+  Widget _buildAppBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _buildAvatar(avatarColor),
-          AppSpacing.gapHXL,
-          _buildAccentAvatar(accentColor),
-          AppSpacing.gapHXL,
-          _buildStatusDot(dotColor),
-          AppSpacing.gapHXL,
-          SizedBox(
-            width: 127,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: AppTextStyles.displayL),
-                if (subtitle != null) ...[
-                  AppSpacing.gapXS,
-                  Text(
-                    subtitle,
-                    style: AppTextStyles.bodyL.copyWith(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (showIndicator) ...[
-            const Spacer(),
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: indicatorBorderColor, width: 4),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => context.pop(), // Back button function
+                child: const CustomIcon(
+                  assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
+                  size: 28,
+                  color: AppColors.neutral800,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 16),
+              const Text(
+                'Profil',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 28,
+                  fontFamily: 'Nunito',
+                  fontWeight: FontWeight.w700,
+                  height: 1.17,
+                  letterSpacing: -0.72,
+                ),
+              ),
+            ],
+          ),
+          const CustomIcon(
+            assetName: 'assets/icons/solar_clipboard-add-outline.svg',
+            size: 28,
+            color: AppColors.peach500,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildAvatar(Color color) {
-    return Container(
-      width: 88,
-      height: 88,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(48),
-      ),
-    );
-  }
-
-  Widget _buildAccentAvatar(Color color) {
-    return Container(
-      width: 88,
-      height: 88,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(48),
-      ),
-    );
-  }
-
-  Widget _buildStatusDot(Color color) {
-    return Container(
-      width: 6.46,
-      height: 6.46,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
+  Widget _buildProfileCard({
+    required String name,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap, 
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.teal100,
+          borderRadius: BorderRadius.all(AppRadius.lg),
+          border: Border.all(color: AppColors.neutral800.withOpacity(0.2), width: 1),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Avatar
+            CircleAvatar(
+              radius: 36,
+              backgroundColor: AppColors.neutral300,
+              child: ClipOval(
+                child: SvgPicture.asset(
+                  'assets/images/profile_pic.svg', 
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 20),
+            
+            // Text Detail
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 24,
+                      fontFamily: 'Nunito',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.45,
+                    ),
+                  ),
+                  if (isActive) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Profil aktif',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontFamily: 'Nunito',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ]
+                ],
+              ),
+            ),
+            
+            // Indicator Radio/Checkmark
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive ? AppColors.peach500 : Colors.transparent,
+                border: isActive 
+                    ? null 
+                    : Border.all(color: AppColors.peach500, width: 2),
+              ),
+              child: isActive 
+                  ? const Icon(Icons.check, color: AppColors.white, size: 20) 
+                  : null,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -196,44 +199,35 @@ class ProfilePage extends StatelessWidget {
   Widget _buildAddProfileCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       decoration: BoxDecoration(
-        color: AppColors.peach100,
+        color: const Color(0xFFFBF3EF),
         borderRadius: BorderRadius.all(AppRadius.lg),
-        border: Border.all(color: AppColors.peach500, width: 3),
+        border: Border.all(color: AppColors.peach500, width: 2)
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.peach500, width: 2),
             ),
-            child: const Icon(Icons.add, color: AppColors.textPrimary),
+            child: const Icon(Icons.add, color: AppColors.peach500, size: 20),
           ),
-          AppSpacing.gapHSM,
-          Expanded(
-            child: Text(
-              'Tambah Profil Baru',
-              style: AppTextStyles.headingL.copyWith(fontSize: 24),
+          const SizedBox(width: 12),
+          const Text(
+            'Tambah Profil Baru',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPageHandle() {
-    return Center(
-      child: Container(
-        width: 144,
-        height: 4,
-        decoration: BoxDecoration(
-          color: AppColors.neutral800.withOpacity(0.6),
-          borderRadius: BorderRadius.circular(2),
-        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/custom_icon.dart'; 
+import '../../../core/navigation/app_routes.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -27,7 +28,7 @@ class SettingsPage extends StatelessWidget {
                 children: [
                   _buildTitle(context),
                   const SizedBox(height: 24),
-                  _buildProfileCard(),
+                  _buildProfileCard(context),
                   const SizedBox(height: 32),
                   
                   _buildSection(
@@ -105,63 +106,68 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _sectionBackground,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 36,
-            backgroundColor: AppColors.neutral300,
-            child: ClipOval(
-              child: SvgPicture.asset(
-                'assets/images/profile_pic.svg', 
-                width: 72,
-                height: 72,
-                fit: BoxFit.cover,
+  Widget _buildProfileCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        context.push(AppRoutes.profile); 
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _sectionBackground,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 36,
+              backgroundColor: AppColors.neutral300,
+              child: ClipOval(
+                child: SvgPicture.asset(
+                  'assets/images/profile_pic.svg', 
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'John Doe',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 24,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.45,
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'John Doe',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 24,
+                      fontFamily: 'Nunito',
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.45,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Ganti profil aktif',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w400,
+                  SizedBox(height: 4),
+                  Text(
+                    'Ganti profil aktif',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 16,
+                      fontFamily: 'Nunito',
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const CustomIcon(
-            assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
-            size: 32,
-            color: AppColors.neutral800,
-          ),
-        ],
+            const CustomIcon(
+              assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
+              size: 32,
+              color: AppColors.neutral800,
+            ),
+          ],
+        ),
       ),
     );
   }
