@@ -4,13 +4,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 class CustomIcon extends StatelessWidget {
   final String assetName;
   final double size;
-  final Color color;
+  final Color? color;
 
   const CustomIcon({
     super.key,
     required this.assetName,
     this.size = 24.0,
-    required this.color,
+    this.color,
   });
 
   @override
@@ -19,7 +19,9 @@ class CustomIcon extends StatelessWidget {
       assetName,
       width: size,
       height: size,
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      colorFilter: color != null 
+          ? ColorFilter.mode(color!, BlendMode.srcIn) 
+          : null,
     );
   }
 }
