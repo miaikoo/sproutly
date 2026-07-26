@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../shared/widgets/add_activity_bottom_sheet.dart'; 
 
 class CreateFirstThenBoardPage extends StatelessWidget {
   const CreateFirstThenBoardPage({super.key});
@@ -23,7 +24,7 @@ class CreateFirstThenBoardPage extends StatelessWidget {
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        _buildStepCard('pertama aku perlu...'),
+                        _buildStepCard(context, 'pertama aku perlu...'),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 16),
                           child: CustomIcon(
@@ -32,7 +33,7 @@ class CreateFirstThenBoardPage extends StatelessWidget {
                             color: Color(0xFFC4806C),
                           ),
                         ),
-                        _buildStepCard('kemudian aku bisa...'),
+                        _buildStepCard(context, 'kemudian aku bisa...'),
                       ],
                     ),
                   ),
@@ -85,7 +86,7 @@ class CreateFirstThenBoardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStepCard(String title) {
+  Widget _buildStepCard(BuildContext context, String title) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -105,23 +106,45 @@ class CreateFirstThenBoardPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Container(
-            width: double.infinity,
-            height: 160,
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF7B9DB8), width: 3),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Center(
-              child: CustomIcon(
-                assetName: 'assets/icons/solar_clipboard-add-outline.svg',
-                size: 36,
-                color: Color(0xFF7B9DB8),
+          GestureDetector(
+            onTap: () => _showAddActivityModal(context), 
+            child: Container(
+              width: double.infinity,
+              height: 160,
+              decoration: BoxDecoration(
+                color: AppColors.white.withOpacity(0.5), 
+                border: Border.all(color: const Color(0xFF7B9DB8), width: 2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(
+                child: CustomIcon(
+                  assetName: 'assets/icons/solar_clipboard-add-outline.svg',
+                  size: 36,
+                  color: Color(0xFF7B9DB8),
+                ),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  void _showAddActivityModal(BuildContext context) async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: const AddActivityBottomSheet(),
+        ),
+      ),
+    );
+
+    if (result != null) {
+      print('Aktivitas yang dipilih dari First-Then: $result');
+    }
   }
 }

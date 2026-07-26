@@ -23,10 +23,12 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
       'Transisi', 'Bermain', 'Sosial', 'Istirahat', 'Menunggu', 'Emosi'
     ];
 
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       width: double.infinity, 
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 24 + bottomPadding),
       decoration: const BoxDecoration(
         color: Color(0xFFFAFCFB),
         borderRadius: BorderRadius.only(
@@ -37,6 +39,7 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Handle bar 
           Center(
             child: Container(
               width: 144,
@@ -48,6 +51,8 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
             ),
           ),
           const SizedBox(height: 20),
+          
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -88,6 +93,8 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
             ],
           ),
           const SizedBox(height: 16),
+
+          // Chips Kategori
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -121,6 +128,8 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
           const SizedBox(height: 16),
           const Divider(thickness: 1),
           const SizedBox(height: 8),
+
+          // Grid Aktivitas
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

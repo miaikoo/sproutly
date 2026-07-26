@@ -132,6 +132,10 @@ class _CreateScheduleBoardPageState extends State<CreateScheduleBoardPage> {
             color: AppColors.neutral300,
             borderRadius: BorderRadius.circular(16),
           ),
+          child: Image.asset(
+            'assets/images/Bahagia.png',
+            fit: BoxFit.contain,
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(

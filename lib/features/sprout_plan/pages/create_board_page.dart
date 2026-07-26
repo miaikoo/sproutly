@@ -90,6 +90,11 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
 
   Widget _buildOptionCard(String title) {
     final isSelected = _selectedType == title;
+    final imageMap = {
+      'Aktivitas': 'assets/images/Belajar.png',
+      'Menunggu': 'assets/images/Menunggu.png',
+      'Emosi': 'assets/images/Bahagia.png',
+    };
     return GestureDetector(
       onTap: () => setState(() => _selectedType = title),
       child: Container(
@@ -110,6 +115,10 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
               decoration: BoxDecoration(
                 color: AppColors.neutral300,
                 borderRadius: BorderRadius.circular(16),
+              ),
+              child: Image.asset(
+                imageMap[title] ?? 'assets/images/Happy.png',
+                fit: BoxFit.contain,
               ),
             ),
             const SizedBox(width: 24),
