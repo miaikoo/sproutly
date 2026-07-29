@@ -15,6 +15,8 @@ import '../../features/sprout_plan/pages/create_activity_board_page.dart';
 import '../../features/sprout_plan/pages/create_schedule_board_page.dart';
 import '../../features/sprout_plan/pages/create_activity_page.dart';
 import '../../features/sprout_plan/pages/create_first_then_board_page.dart';
+import '../../features/sprout_plan/pages/create_waiting_board_page.dart';
+import '../../features/sprout_plan/pages/create_emotion_board_page.dart';
 
 import '../../features/sprout_plan/pages/board_detail_page.dart';
 import '../../features/sprout_plan/pages/activity_detail_page.dart';
@@ -91,6 +93,14 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.createFirstThenBoard,
       builder: (_, __) => const CreateFirstThenBoardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.createWaitingBoard,
+      builder: (context, state) => const CreateWaitingBoardPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.createEmotionBoard,
+      builder: (context, state) => const CreateEmotionBoardPage(),
     ),
 
     // Routes for other pages

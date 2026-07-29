@@ -90,11 +90,13 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
 
   Widget _buildOptionCard(String title) {
     final isSelected = _selectedType == title;
+    
     final imageMap = {
       'Aktivitas': 'assets/images/Belajar.png',
       'Menunggu': 'assets/images/Menunggu.png',
-      'Emosi': 'assets/images/Bahagia.png',
+      'Emosi': 'assets/images/Bahagia.png', 
     };
+
     return GestureDetector(
       onTap: () => setState(() => _selectedType = title),
       child: Container(
@@ -103,12 +105,14 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
           color: AppColors.teal100,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF446860) : AppColors.neutral800.withOpacity(0.2),
+            // Ganti Color(0xFF446860) jadi AppColors.teal700 (atau warna gelap andalanmu)
+            color: isSelected ? AppColors.teal700 : AppColors.neutral800.withOpacity(0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
+            // Thumbnail Image
             Container(
               width: 80,
               height: 80,
@@ -117,11 +121,13 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Image.asset(
-                imageMap[title] ?? 'assets/images/Happy.png',
+                imageMap[title] ?? 'assets/images/Bahagia.png',
                 fit: BoxFit.contain,
               ),
             ),
             const SizedBox(width: 24),
+            
+            // Text Title
             Expanded(
               child: Text(
                 title,
@@ -133,18 +139,29 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
                 ),
               ),
             ),
+            
+            // Custom Radio Button
             Container(
               width: 32,
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF446860) : AppColors.neutral800.withOpacity(0.5),
+                  color: isSelected ? AppColors.teal700 : AppColors.neutral800.withOpacity(0.5),
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? Center(child: Container(width: 16, height: 16, decoration: const BoxDecoration(color: Color(0xFF446860), shape: BoxShape.circle)))
+                  ? Center(
+                      child: Container(
+                        width: 16, 
+                        height: 16, 
+                        decoration: const BoxDecoration(
+                          color: AppColors.teal700, 
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    )
                   : null,
             ),
           ],
@@ -159,10 +176,13 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
       onTap: () {
         if (!isEnabled) return;
         
+        // Cek pilihan dan lempar ke route yang sesuai
         if (_selectedType == 'Aktivitas') {
           context.push(AppRoutes.createBoardActivity);
-        } else {
-          print('Lanjut ke $_selectedType');
+        } else if (_selectedType == 'Menunggu') {
+          context.push(AppRoutes.createWaitingBoard); // <--- Arahkan ke Waiting Board
+        } else if (_selectedType == 'Emosi') {
+          context.push(AppRoutes.createEmotionBoard); // <--- Arahkan ke Emotion Board
         }
       },
       child: Container(

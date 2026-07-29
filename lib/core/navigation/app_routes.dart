@@ -21,6 +21,8 @@ class AppRoutes {
   static const createScheduleBoard = '/board/create/schedule';
   static const createActivity = '/board/create/activity-detail';
   static const createFirstThenBoard = '/board/create/first-then';
+  static const String createWaitingBoard = '/create-waiting-board';
+  static const String createEmotionBoard = '/create-emotion-board';
 
   static const analytics = '/analytics';
   static const report = '/analytics/report';
