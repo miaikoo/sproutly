@@ -1,7 +1,5 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../shared/widgets/custom_icon.dart';
 
 class BuddyPage extends StatelessWidget {
@@ -15,11 +13,14 @@ class BuddyPage extends StatelessWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
-            child: Column(
+            child: Stack(
               children: [
-                _buildHeader(),
-                Expanded(
-                  child: _buildMapArea(),
+                _buildMapArea(),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildHeader(),
                 ),
               ],
             ),
@@ -30,10 +31,23 @@ class BuddyPage extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.background,
+            AppColors.background.withOpacity(0.8), 
+            AppColors.background.withOpacity(0.0), 
+          ],
+          stops: const [0.3, 0.7, 1.0], 
+        ),
+      ),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 48),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,19 +73,18 @@ class BuddyPage extends StatelessWidget {
               ),
             ],
           ),
-          // Badge Point & Shopping Icon
           Row(
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.teal500,
+                  color: const Color(0xFF7EA29C),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Row(
                   children: const [
                     CustomIcon(
-                      assetName: 'assets/icons/glyphs_coin-bold.svg',
+                      assetName: 'assets/icons/glyphs_coin-bold.svg', 
                       size: 20,
                       color: AppColors.white,
                     ),
@@ -92,7 +105,7 @@ class BuddyPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.peach500,
+                  color: const Color(0xFFC4806C),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const CustomIcon(
@@ -109,115 +122,93 @@ class BuddyPage extends StatelessWidget {
   }
 
   Widget _buildMapArea() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth;
-        final h = constraints.maxHeight;
-
-        // Stepping stones coordinates 
-        final nodes = [
-          const Offset(0.35, 0.05),
-          const Offset(0.75, 0.25),
-          const Offset(0.15, 0.45),
-          const Offset(0.50, 0.65),
-          const Offset(0.75, 0.85),
-        ];
-
-        return Stack(
-          children: [
-            CustomPaint(
-              size: Size(w, h),
-              painter: _DashedPathPainter(nodes),
-            ),
-            
-            ...nodes.asMap().entries.map((e) {
-              final isFirst = e.key == 0;
-              return Positioned(
-                left: e.value.dx * w - 45,
-                top: e.value.dy * h - 35, 
-                child: _buildNode(isFirst: isFirst),
-              );
-            }).toList(),
-
-            // Companion
-            Positioned(
-              left: nodes.last.dx * w - 60, 
-              top: nodes.last.dy * h - 140, 
-              child: Image.asset(
-                'assets/images/happy.png',
-                width: 240,
-                height: 300, 
-                fit: BoxFit.contain,
-              ),
-            ),
-          ],
-        );
-      }
+    return ListView.builder(
+      reverse: true,
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return _buildMapChunk(context, chunkIndex: index);
+      },
     );
   }
 
-  // Desain Batu Pijakan 3D Oval
-  Widget _buildNode({bool isFirst = false}) {
+  Widget _buildMapChunk(BuildContext context, {required int chunkIndex}) {
+    // AscpectRatio 10:16 
+    return AspectRatio(
+      aspectRatio: 10 / 16, 
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+
+          // Coordinate Percentage
+          final nodes = [
+            const Offset(0.65, 0.85),
+            const Offset(0.18, 0.60),
+            const Offset(0.78, 0.35),
+            const Offset(0.20, 0.10),
+          ];
+
+          return Stack(
+            children: [
+              // Layer 1 - Background 
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/images/buddy_background.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+
+              // Layer 2 - Stepping Stones
+              ...nodes.asMap().entries.map((e) {
+                final isActive = chunkIndex == 0 && e.key == 0;
+                
+                return Positioned(
+                  left: e.value.dx * w - 45,
+                  top: e.value.dy * h - 30, 
+                  child: _buildNode(isActive: isActive),
+                );
+              }).toList(),
+
+              // Layer 3 - Companion
+              if (chunkIndex == 0)
+                Positioned(
+                  left: nodes[0].dx * w - 100,
+                  top: nodes[0].dy * h - 220, 
+                  child: Image.asset(
+                    'assets/images/Bahagia.png',
+                    width: 200,  
+                    height: 250, 
+                    fit: BoxFit.contain,
+                  ),
+                ),
+            ],
+          );
+        }
+      ),
+    );
+  }
+
+  // Widget Stepping Stone
+  Widget _buildNode({bool isActive = false}) {
     return Container(
-      width: 90,
-      height: 60,
-      decoration: BoxDecoration(
-        color: isFirst ? const Color(0xFFF1F5F4) : const Color(0xFFB8D2CE),
-        borderRadius: BorderRadius.circular(45), 
-        border: Border.all(
-          color: isFirst ? AppColors.neutral300 : const Color(0xFF7EA29C),
-          width: 3,
+      width: 100, 
+      height: 70,
+      decoration: ShapeDecoration(
+        color: isActive ? const Color(0xFFF1F5F4) : const Color(0xFFB8D2CE),
+        shape: OvalBorder(
+          side: BorderSide(
+            color: isActive ? AppColors.neutral300 : const Color(0xFF7EA29C),
+            width: 3,
+          ),
         ),
-        boxShadow: [
+        shadows: [
           BoxShadow(
-            color: isFirst ? AppColors.neutral300 : const Color(0xFF7EA29C),
+            color: isActive ? AppColors.neutral300 : const Color(0xFF7EA29C),
             offset: const Offset(0, 8),
+            blurRadius: 0,
           ),
         ],
       ),
     );
   }
-}
-
-// Dashed path
-class _DashedPathPainter extends CustomPainter {
-  final List<Offset> nodes;
-  _DashedPathPainter(this.nodes);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (nodes.isEmpty) return;
-
-    final paint = Paint()
-      ..color = const Color(0xFFC4806C).withOpacity(0.8) // Path color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    path.moveTo(nodes[0].dx * size.width, nodes[0].dy * size.height);
-    
-    for (int i = 0; i < nodes.length - 1; i++) {
-      final p0 = Offset(nodes[i].dx * size.width, nodes[i].dy * size.height);
-      final p1 = Offset(nodes[i+1].dx * size.width, nodes[i+1].dy * size.height);
-      
-      final cx = (p0.dx + p1.dx) / 2;
-      final cy = p0.dy; // Control point for the curve
-
-      path.quadraticBezierTo(cx, cy, p1.dx, p1.dy);
-    }
-
-    // Draw dashed path
-    for (PathMetric pathMetric in path.computeMetrics()) {
-      double distance = 0.0;
-      while (distance < pathMetric.length) {
-        final dashPath = pathMetric.extractPath(distance, distance + 12); 
-        canvas.drawPath(dashPath, paint);
-        distance += 24; 
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
