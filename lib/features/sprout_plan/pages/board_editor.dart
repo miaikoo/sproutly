@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/navigation/app_routes.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../models/enums.dart';
+import '../../../models/schedule.dart';
+import '../../../shared/widgets/activity_image.dart';
 import '../../../shared/widgets/add_activity_bottom_sheet.dart';
 
 /// Small pieces shared by the board pages, so all four board types behave and
@@ -8,10 +16,10 @@ import '../../../shared/widgets/add_activity_bottom_sheet.dart';
 
 /// Card colour per board type, matching each create page's palette.
 const _boardColors = {
-  BoardType.schedule: Color(0xFFBCA0B0),
-  BoardType.firstThen: Color(0xFF98B6CE),
-  BoardType.waiting: Color(0xFFDDD1A4),
-  BoardType.emotion: Color(0xFFE0A896),
+  BoardType.schedule: AppColors.mauve300,
+  BoardType.firstThen: AppColors.steel300,
+  BoardType.waiting: AppColors.cream300,
+  BoardType.emotion: AppColors.peach300,
 };
 
 Color boardColor(BoardType type) => _boardColors[type] ?? _boardColors[BoardType.schedule]!;
@@ -57,13 +65,13 @@ Future<String?> promptForTitle(BuildContext context, {required String current}) 
   final result = await showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Nama Papan'),
+      title: Text('Nama Papan'),
       content: TextField(controller: controller, autofocus: true),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text('Batal')),
         TextButton(
           onPressed: () => Navigator.pop(context, controller.text),
-          child: const Text('Simpan'),
+          child: Text('Simpan'),
         ),
       ],
     ),
@@ -79,7 +87,7 @@ Future<int?> promptForWaitMinutes(BuildContext context, {required int current}) 
   return showDialog<int>(
     context: context,
     builder: (context) => SimpleDialog(
-      title: const Text('Lama menunggu'),
+      title: Text('Lama menunggu'),
       children: [
         for (final minutes in options)
           SimpleDialogOption(
@@ -100,3 +108,66 @@ void showBoardSnack(BuildContext context, String message) {
 
 /// mm:ss label for a whole number of minutes.
 String formatWait(int minutes) => '${minutes.toString().padLeft(2, '0')}:00';
+
+/// A board in a grid. Shared by Home and the Papan tab, which had two copies of
+/// this that had already drifted apart on colour and aspect ratio.
+class BoardTile extends StatelessWidget {
+  const BoardTile({super.key, required this.schedule});
+
+  final Schedule schedule;
+
+  @override
+  Widget build(BuildContext context) {
+    final thumbnail = schedule.activities.isNotEmpty ? schedule.activities.first.icon : null;
+    final count = schedule.activities.length;
+
+    return Semantics(
+      button: true,
+      label: '${schedule.title}, ${boardTypeLabel(schedule.type)}, $count kartu',
+      child: Material(
+        color: AppColors.transparent,
+        borderRadius: AppRadius.tile,
+        child: InkWell(
+          borderRadius: AppRadius.tile,
+          onTap: () => context.push(AppRoutes.boardDetailPath(schedule.id)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: boardColor(schedule.type),
+                    borderRadius: AppRadius.tile,
+                  ),
+                  child: thumbnail != null
+                      ? ActivityImage(thumbnail)
+                      : Icon(
+                          Icons.event_note_outlined,
+                          color: AppColors.onTint.withValues(alpha: 0.55),
+                          size: 32,
+                        ),
+                ),
+              ),
+              AppSpacing.gapXS,
+              Text(
+                schedule.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.headingS,
+              ),
+              // The type is what distinguishes two boards with similar names.
+              Text(
+                boardTypeLabel(schedule.type),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.caption,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

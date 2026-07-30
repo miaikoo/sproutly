@@ -17,6 +17,7 @@ import '../../../models/activity.dart';
 import '../../../models/behaviour_log.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../shared/widgets/activity_image.dart';
 
 const _moodOptions = {
   Mood.happy: ('😊', 'Senang'),
@@ -55,7 +56,7 @@ class _ActivityDetailPageState extends ConsumerState<ActivityDetailPage> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
+            constraints: const BoxConstraints(maxWidth: 720),
             child: scheduleAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Gagal memuat aktivitas: $e')),
@@ -103,15 +104,22 @@ class _ActivityDetailPageState extends ConsumerState<ActivityDetailPage> {
           ),
           AppSpacing.gapXL,
           Center(
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                color: AppColors.neutral300,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Image.asset(activity.icon, fit: BoxFit.contain),
-            ),
+            child: Builder(builder: (context) {
+              // Scales with the screen so a tablet shows a big picture, not a
+              // phone-sized one floating in the middle.
+              final side =
+                  (MediaQuery.sizeOf(context).width * 0.5).clamp(140.0, 260.0);
+              return Container(
+                width: side,
+                height: side,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.neutral300,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ActivityImage(activity.icon),
+              );
+            }),
           ),
           AppSpacing.gapMD,
           Center(

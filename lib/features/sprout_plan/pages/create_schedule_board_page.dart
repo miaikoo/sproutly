@@ -10,6 +10,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
+import '../../../shared/widgets/activity_image.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class _ScheduleSlot {
   String? activityId;
@@ -59,7 +61,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFD2E2EE),
+                            color: AppColors.steel100,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Column(
@@ -67,8 +69,8 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                               const Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
-                                  Text('Aktivitas', style: TextStyle(fontFamily: 'Nunito', fontSize: 14)),
-                                  Text('Waktu', style: TextStyle(fontFamily: 'Nunito', fontSize: 14)),
+                                  Text('Aktivitas', style: AppTextStyles.bodyS),
+                                  Text('Waktu', style: AppTextStyles.bodyS),
                                 ],
                               ),
                               const SizedBox(height: 12),
@@ -114,12 +116,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
           Expanded(
             child: Text(
               _titleCtrl.text,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 24,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.displayM,
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -162,7 +159,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               decoration: BoxDecoration(
-                color: const Color(0xFFD2E2EE),
+                color: AppColors.steel100,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -171,12 +168,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                   Expanded(
                     child: Text(
                       _titleCtrl.text,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 20,
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppTextStyles.displayM,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -207,8 +199,8 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
               height: 100,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.white.withOpacity(0.5),
-                border: Border.all(color: const Color(0xFF7B9DB8), width: 1.5),
+                color: AppColors.white.withValues(alpha: 0.5),
+                border: Border.all(color: AppColors.steel500, width: 1.5),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: catalogItem == null
@@ -216,16 +208,16 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                       child: CustomIcon(
                         assetName: 'assets/icons/solar_clipboard-add-outline.svg',
                         size: 28,
-                        color: Color(0xFF7B9DB8),
+                        color: AppColors.steel500,
                       ),
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(child: Image.asset(catalogItem.image, fit: BoxFit.contain)),
+                        Expanded(child: ActivityImage(catalogItem.image)),
                         Text(
                           catalogItem.title,
-                          style: const TextStyle(fontFamily: 'Nunito', fontSize: 12),
+                          style: AppTextStyles.caption,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -239,17 +231,12 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             decoration: BoxDecoration(
-              color: const Color(0xFF7B9DB8),
+              color: AppColors.steel500,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               slot.time.format(context),
-              style: const TextStyle(
-                color: AppColors.white,
-                fontSize: 22,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.displayM.copyWith(color: AppColors.white),
             ),
           ),
         ),
@@ -257,7 +244,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
           const SizedBox(width: 8),
           IconButton(
             onPressed: () => setState(() => _slots.removeAt(index)),
-            icon: const Icon(Icons.close, color: AppColors.error),
+            icon: Icon(Icons.close, color: AppColors.error),
           ),
         ],
       ],
@@ -275,12 +262,12 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFFA88898),
+          color: AppColors.mauve500,
           borderRadius: BorderRadius.circular(32),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             CustomIcon(
               assetName: 'assets/icons/solar_clipboard-add-outline.svg',
               size: 24,
@@ -289,12 +276,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
             SizedBox(width: 8),
             Text(
               'Tambahkan Kegiatan',
-              style: TextStyle(
-                color: AppColors.white,
-                fontSize: 18,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.headingL.copyWith(color: AppColors.white),
             ),
           ],
         ),

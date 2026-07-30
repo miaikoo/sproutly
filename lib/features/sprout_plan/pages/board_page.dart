@@ -9,16 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/enums.dart';
-import '../../../models/schedule.dart';
-import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
-
-class BoardPage extends ConsumerStatefulWidget {
-  const BoardPage({super.key});
-
-  @override
-  ConsumerState<BoardPage> createState() => _BoardPageState();
-}
 
 /// Filter chip label → the board type it shows. 'Semua' shows everything.
 const _boardFilters = <String, BoardType?>{
@@ -29,6 +20,13 @@ const _boardFilters = <String, BoardType?>{
   'Emosi': BoardType.emotion,
 };
 
+class BoardPage extends ConsumerStatefulWidget {
+  const BoardPage({super.key});
+
+  @override
+  ConsumerState<BoardPage> createState() => _BoardPageState();
+}
+
 class _BoardPageState extends ConsumerState<BoardPage> {
   String _selectedFilter = 'Semua';
 
@@ -38,36 +36,53 @@ class _BoardPageState extends ConsumerState<BoardPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      // One primary action on this screen, which is what a FAB is for.
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push(AppRoutes.createBoard),
+        backgroundColor: AppColors.actionPrimary,
+        foregroundColor: AppColors.onFilled,
+        icon: Icon(Icons.add),
+        label: Text('Buat papan'),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: SingleChildScrollView(
-              padding: AppSpacing.pagePadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context),
-                  AppSpacing.gapMD,
-                  _buildFilterChips(),
-                  AppSpacing.gapXL,
-                  childAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text('Gagal memuat profil anak: $e', style: AppTextStyles.bodyM),
-                    data: (child) {
-                      if (child == null) {
-                        return Text('Profil anak belum tersedia.', style: AppTextStyles.bodyM);
-                      }
-                      return _buildBoardList(child.id);
-                    },
+            constraints: const BoxConstraints(maxWidth: 840),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xl,
+                    AppSpacing.md,
+                    AppSpacing.xl,
+                    AppSpacing.sm,
                   ),
-                  AppSpacing.gapXXL,
-                ],
-              ),
+                  child: Text('Papan saya', style: AppTextStyles.displayL),
+                ),
+                _buildFilterChips(),
+                AppSpacing.gapMD,
+                Expanded(
+                  child: childAsync.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => _message('Gagal memuat profil anak: $e'),
+                    data: (child) => child == null
+                        ? _message('Profil anak belum tersedia.')
+                        : _buildBoardList(child.id),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _message(String text) {
+    return Padding(
+      padding: AppSpacing.pagePadding,
+      child: Text(text, style: AppTextStyles.bodyM, textAlign: TextAlign.center),
     );
   }
 
@@ -76,76 +91,61 @@ class _BoardPageState extends ConsumerState<BoardPage> {
 
     return schedulesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Text('Gagal memuat papan: $e', style: AppTextStyles.bodyM),
+      error: (e, _) => _message('Gagal memuat papan: $e'),
       data: (schedules) {
         final wanted = _boardFilters[_selectedFilter];
         final visible =
             wanted == null ? schedules : schedules.where((s) => s.type == wanted).toList();
 
         if (visible.isEmpty) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Center(
-              child: Text(
-                schedules.isEmpty
-                    ? 'Belum ada papan. Tekan + untuk membuat papan baru.'
-                    : 'Belum ada papan $_selectedFilter.',
-                style: AppTextStyles.bodyM,
-                textAlign: TextAlign.center,
-              ),
-            ),
+          return _EmptyBoards(
+            isFirstEver: schedules.isEmpty,
+            filterLabel: _selectedFilter,
+            onCreate: () => context.push(AppRoutes.createBoard),
           );
         }
-        return _buildBoardGrid(visible);
-      },
-    );
-  }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('Papan saya', style: AppTextStyles.displayXL),
-          GestureDetector(
-            onTap: () => context.push(AppRoutes.createBoard),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_clipboard-add-outline.svg',
-              size: 32,
-              color: AppColors.peach500,
+        return LayoutBuilder(builder: (context, constraints) {
+          final columns = (constraints.maxWidth / 168).floor().clamp(2, 5);
+
+          return GridView.builder(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              0,
+              AppSpacing.xl,
+              // Clear of the FAB.
+              88,
             ),
-          ),
-        ],
-      ),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              crossAxisSpacing: AppSpacing.md,
+              mainAxisSpacing: AppSpacing.md,
+              childAspectRatio: 0.82,
+            ),
+            itemCount: visible.length,
+            itemBuilder: (context, index) => BoardTile(schedule: visible[index]),
+          );
+        });
+      },
     );
   }
 
   Widget _buildFilterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
       child: Row(
         children: _boardFilters.keys.map((label) {
           final isSelected = _selectedFilter == label;
           return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedFilter = label),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF446860) : const Color(0xFF7EA29C),
-                  borderRadius: BorderRadius.circular(36),
-                ),
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 16,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+            padding: const EdgeInsets.only(right: AppSpacing.xs),
+            child: ChoiceChip(
+              label: Text(label),
+              selected: isSelected,
+              onSelected: (_) => setState(() => _selectedFilter = label),
+              labelStyle: AppTextStyles.bodyS.copyWith(
+                color: isSelected ? AppColors.onFilled : AppColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
           );
@@ -153,66 +153,68 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       ),
     );
   }
-
-  Widget _buildBoardGrid(List<Schedule> schedules) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: schedules.length,
-      itemBuilder: (context, index) {
-        return _BoardCard(schedule: schedules[index]);
-      },
-    );
-  }
 }
 
-class _BoardCard extends StatelessWidget {
-  const _BoardCard({required this.schedule});
-  final Schedule schedule;
+/// Teaches what a board is on first run, rather than saying "nothing here".
+class _EmptyBoards extends StatelessWidget {
+  const _EmptyBoards({
+    required this.isFirstEver,
+    required this.filterLabel,
+    required this.onCreate,
+  });
+
+  final bool isFirstEver;
+  final String filterLabel;
+  final VoidCallback onCreate;
 
   @override
   Widget build(BuildContext context) {
-    final thumbnail = schedule.activities.isNotEmpty ? schedule.activities.first.icon : null;
-
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.boardDetailPath(schedule.id)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: boardColor(schedule.type),
-                borderRadius: BorderRadius.circular(24),
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: AppColors.teal100,
+                shape: BoxShape.circle,
               ),
-              child: thumbnail != null
-                  ? Image.asset(thumbnail, fit: BoxFit.contain)
-                  : const Icon(Icons.event_note, color: AppColors.white, size: 40),
+              child: Icon(
+                Icons.dashboard_customize_outlined,
+                color: AppColors.teal900,
+                size: 32,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            schedule.title,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w600,
-              height: 1.4,
+            AppSpacing.gapLG,
+            Text(
+              isFirstEver ? 'Belum ada papan' : 'Belum ada papan $filterLabel',
+              style: AppTextStyles.headingL,
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            AppSpacing.gapXS,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Text(
+                isFirstEver
+                    ? 'Papan adalah kumpulan kartu bergambar yang menuntun anak '
+                        'menjalani rutinitas — satu langkah pada satu waktu.'
+                    : 'Buat papan jenis ini, atau pilih filter Semua untuk melihat '
+                        'papan yang sudah ada.',
+                style: AppTextStyles.bodyM.copyWith(color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            AppSpacing.gapLG,
+            FilledButton.icon(
+              onPressed: onCreate,
+              icon: Icon(Icons.add),
+              label: Text('Buat papan'),
+            ),
+          ],
+        ),
       ),
     );
   }

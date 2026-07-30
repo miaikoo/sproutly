@@ -80,7 +80,7 @@ class ReportPage extends ConsumerWidget {
                     loading: () => const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Text('Gagal memuat profil anak: $e'),
                     data: (child) {
-                      if (child == null) return const Text('Profil anak belum tersedia.');
+                      if (child == null) return Text('Profil anak belum tersedia.');
                       return _buildList(ref, child.id);
                     },
                   ),

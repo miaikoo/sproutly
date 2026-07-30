@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Media for child profiles and parent-made activity cards. Paths are
+// children/{childId}/... so ownership can be checked against the Firestore
+// child document.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function canAccessChild(childId) {
+      let child = firestore.get(/databases/(default)/documents/children/$(childId)).data;
+      return child.parentId == request.auth.uid
+          || child.get('therapistId', null) == request.auth.uid;
+    }
+
+    match /children/{childId}/{folder}/{file} {
+      allow read: if request.auth != null && canAccessChild(childId);
+
+      // Only the parent uploads or deletes; a therapist can look but not change
+      // the child's pictures. Capped so a mis-picked video can't be uploaded.
+      allow write: if request.auth != null
+        && canAccessChild(childId)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

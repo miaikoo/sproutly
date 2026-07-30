@@ -10,6 +10,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
+import '../../../shared/widgets/activity_image.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class CreateEmotionBoardPage extends ConsumerStatefulWidget {
   const CreateEmotionBoardPage({super.key});
@@ -49,14 +51,9 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                               _buildTitleInput(),
                               const SizedBox(height: 32),
 
-                              const Text(
+                              Text(
                                 'Ketika aku merasa',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 22,
-                                  fontFamily: 'Nunito',
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: AppTextStyles.headingL,
                               ),
                               const SizedBox(height: 16),
 
@@ -75,14 +72,9 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
 
                               Column(
                                 children: [
-                                  const Text(
+                                  Text(
                                     'aku bisa...',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 22,
-                                      fontFamily: 'Nunito',
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    style: AppTextStyles.headingL,
                                   ),
                                   const SizedBox(height: 16),
                                   Row(
@@ -97,12 +89,7 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                                         padding: EdgeInsets.symmetric(horizontal: 16),
                                         child: Text(
                                           'Atau',
-                                          style: TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 20,
-                                            fontFamily: 'Nunito',
-                                            fontWeight: FontWeight.w700,
-                                          ),
+                                          style: AppTextStyles.displayM,
                                         ),
                                       ),
                                       _buildAddBox(
@@ -151,12 +138,7 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                 _title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayL,
               ),
             ),
           ),
@@ -206,12 +188,7 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                 _title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayM,
               ),
             ),
             const CustomIcon(
@@ -238,15 +215,10 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'kemudian aku bisa melakukan...',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.white,
-              fontSize: 22,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.headingL.copyWith(color: AppColors.white),
           ),
           const SizedBox(height: 24),
           Row(
@@ -257,16 +229,11 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                 activityId: _thenAId,
                 onTap: () => _pick((id) => _thenAId = id),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
                   'Atau',
-                  style: TextStyle(
-                    color: AppColors.white,
-                    fontSize: 20,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.headingL.copyWith(color: AppColors.white),
                 ),
               ),
               _buildAddBox(
@@ -309,17 +276,12 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Expanded(child: Image.asset(item.image, fit: BoxFit.contain)),
+        Expanded(child: ActivityImage(item.image)),
         Text(
           item.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 12,
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.caption,
         ),
       ],
     );

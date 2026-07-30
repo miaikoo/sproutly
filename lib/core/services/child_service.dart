@@ -60,15 +60,17 @@ class ChildService {
     String? name,
     DateTime? birthDate,
     Severity? severity,
+    String? photoUrl,
     List<String>? preferences,
     List<String>? interventionTargets,
   }) async {
     await _children.doc(childId).update({
-      if (name != null) 'name': name,
-      if (birthDate != null) 'birthDate': birthDate.toIso8601String(),
-      if (severity != null) 'severity': severity.name,
-      if (preferences != null) 'preferences': preferences,
-      if (interventionTargets != null) 'interventionTargets': interventionTargets,
+      'name': ?name,
+      'birthDate': ?birthDate?.toIso8601String(),
+      'severity': ?severity?.name,
+      'photoUrl': ?photoUrl,
+      'preferences': ?preferences,
+      'interventionTargets': ?interventionTargets,
     });
   }
 

@@ -13,6 +13,7 @@ import '../../../models/enums.dart';
 import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
+import '../../../shared/widgets/activity_image.dart';
 
 class BoardDetailPage extends ConsumerWidget {
   const BoardDetailPage({super.key, required this.scheduleId});
@@ -74,7 +75,7 @@ class BoardDetailPage extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: () => context.push(AppRoutes.runBoardPath(schedule.id)),
-                icon: const Icon(Icons.play_arrow, color: AppColors.white),
+                icon: Icon(Icons.play_arrow, color: AppColors.white),
                 label: Text(
                   'Mulai bersama anak',
                   style: AppTextStyles.headingM.copyWith(color: AppColors.white),
@@ -86,7 +87,7 @@ class BoardDetailPage extends ConsumerWidget {
           child: ListView.separated(
             padding: AppSpacing.pagePadding,
             itemCount: activities.length,
-            separatorBuilder: (_, __) => AppSpacing.gapMD,
+            separatorBuilder: (_, _) => AppSpacing.gapMD,
             itemBuilder: (context, index) => _ActivityRow(
               scheduleId: schedule.id,
               activity: activities[index],
@@ -138,7 +139,7 @@ class BoardDetailPage extends ConsumerWidget {
           const SizedBox(width: 16),
           Expanded(child: Text(schedule.title, style: AppTextStyles.displayM)),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: AppColors.neutral800),
+            icon: Icon(Icons.more_vert, color: AppColors.neutral800),
             onSelected: (value) => switch (value) {
               'rename' => _rename(context, ref, schedule),
               'delete' => _confirmDelete(context, ref, schedule),
@@ -165,13 +166,13 @@ class BoardDetailPage extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Hapus ${schedule.title}?'),
-        content: const Text(
+        content: Text(
           'Papan ini akan dihapus permanen. Catatan perkembangan yang sudah tersimpan '
           'tidak terhapus.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Hapus')),
         ],
       ),
     );
@@ -218,7 +219,7 @@ class _ActivityRow extends StatelessWidget {
               color: AppColors.neutral200,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Image.asset(activity.icon, fit: BoxFit.contain),
+            child: ActivityImage(activity.icon),
           ),
           AppSpacing.gapHMD,
           Expanded(

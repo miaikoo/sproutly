@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class CreateActivityBoardPage extends StatefulWidget {
   const CreateActivityBoardPage({super.key});
@@ -31,15 +32,10 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Papan apa yang ingin kamu buat?',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 28,
-                            fontFamily: 'Nunito',
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: AppTextStyles.displayL,
                         ),
                         const SizedBox(height: 32),
                         _buildOptionCard('Jadwal'),
@@ -47,12 +43,7 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
                           padding: EdgeInsets.symmetric(vertical: 16),
                           child: Text(
                             'Atau',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 20,
-                              fontFamily: 'Nunito',
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: AppTextStyles.displayM,
                           ),
                         ),
                         _buildOptionCard('First-Then'),
@@ -84,14 +75,9 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Buat Papan Aktivitas Baru',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.displayM,
           ),
         ],
       ),
@@ -113,7 +99,7 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
           color: AppColors.teal100,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? const Color(0xFF446860) : AppColors.neutral800.withOpacity(0.2),
+            color: isSelected ? AppColors.teal700 : AppColors.neutral800.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -134,12 +120,7 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
             const SizedBox(height: 24),
             Text(
               title,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 24,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.displayM,
             ),
           ],
         ),
@@ -167,15 +148,10 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
           color: isEnabled ? AppColors.peach500 : AppColors.peach100,
           borderRadius: BorderRadius.circular(36),
         ),
-        child: const Text(
+        child: Text(
           'Selanjutnya',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppColors.white,
-            fontSize: 20,
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.displayM.copyWith(color: AppColors.white),
         ),
       ),
     );

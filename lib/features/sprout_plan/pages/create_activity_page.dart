@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/data/activity_catalog.dart';
 import '../../../core/services/child_service.dart';
+import '../../../core/services/image_upload_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
+import '../../../shared/widgets/activity_image.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 /// Category chips offered when making an activity, mapped to the enum actually
 /// stored. Labels without a matching category were dropped rather than saved as
 /// something else.
-const _sectionLabel = TextStyle(
-  color: AppColors.textPrimary,
-  fontSize: 16,
-  fontFamily: 'Nunito',
-  fontWeight: FontWeight.w700,
-  letterSpacing: 0.56,
-);
+final _sectionLabel = AppTextStyles.headingS;
 
 const _categoryOptions = <String, ActivityCategory>{
   'Perawatan diri': ActivityCategory.selfCare,
@@ -45,6 +43,7 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
   ActivityCategory _category = ActivityCategory.selfCare;
   final List<String> _steps = [];
   bool _isSaving = false;
+  bool _isUploading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +66,7 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
                         const SizedBox(height: 24),
                         _buildImagePicker(),
                         const SizedBox(height: 32),
-                        const Text('KATEGORI', style: _sectionLabel),
+                        Text('KATEGORI', style: _sectionLabel),
                         const SizedBox(height: 12),
                         _buildCategoryChips(),
                         const SizedBox(height: 32),
@@ -99,14 +98,9 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Buat Aktivitas',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.displayL,
           ),
           const Spacer(),
           GestureDetector(
@@ -134,7 +128,7 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         decoration: BoxDecoration(
-          color: const Color(0xFFD2E2EE),
+          color: AppColors.steel100,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -145,12 +139,7 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
                 _title.isEmpty ? 'Beri nama aktivitas' : _title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: _title.isEmpty ? AppColors.neutral500 : AppColors.textPrimary,
-                  fontSize: 22,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayM,
               ),
             ),
             const CustomIcon(
@@ -176,35 +165,45 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
               color: AppColors.neutral300,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Image.asset(_image, fit: BoxFit.contain),
+            child: ActivityImage(_image),
           ),
         ),
         const SizedBox(height: 24),
-        // ponytail: pick from bundled artwork only. Uploading a photo of the
-        // child's own bathroom/plate needs Firebase Storage — add image_picker
-        // + firebase_storage when that matters.
-        Center(
-          child: GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF446860),
-                borderRadius: BorderRadius.circular(36),
-              ),
-              child: const Text(
-                'Ganti Gambar',
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontSize: 16,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
+        // A photo of the child's own bathroom or plate is far more meaningful to
+        // them than a generic pictogram, so uploading is offered alongside the
+        // bundled artwork.
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _chip('Gambar Bawaan', _pickImage),
+            _chip('Ambil Foto', () => _upload(ImageSource.camera)),
+            _chip('Dari Galeri', () => _upload(ImageSource.gallery)),
+          ],
         ),
+        if (_isUploading) ...[
+          const SizedBox(height: 16),
+          const Center(child: CircularProgressIndicator()),
+        ],
       ],
+    );
+  }
+
+  Widget _chip(String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: _isUploading ? null : onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.teal700,
+          borderRadius: BorderRadius.circular(36),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.headingS.copyWith(color: AppColors.white),
+        ),
+      ),
     );
   }
 
@@ -219,17 +218,12 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF446860) : const Color(0xFF7EA29C),
+              color: isSelected ? AppColors.teal700 : AppColors.teal500,
               borderRadius: BorderRadius.circular(36),
             ),
             child: Text(
               entry.key,
-              style: TextStyle(
-                color: AppColors.white,
-                fontSize: 16,
-                fontFamily: 'Nunito',
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              ),
+              style: AppTextStyles.bodyM.copyWith(color: AppColors.white),
             ),
           ),
         );
@@ -245,20 +239,15 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('INSTRUKSI BERTAHAP', style: _sectionLabel),
-            TextButton(onPressed: _addStep, child: const Text('+ Tambah')),
+            Text('INSTRUKSI BERTAHAP', style: _sectionLabel),
+            TextButton(onPressed: _addStep, child: Text('+ Tambah')),
           ],
         ),
         const SizedBox(height: 8),
         if (_steps.isEmpty)
-          const Text(
+          Text(
             'Opsional. Tanpa instruksi, SproutVoice hanya menyebut nama aktivitas.',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w400,
-            ),
+            style: AppTextStyles.bodyM,
           )
         else
           for (var i = 0; i < _steps.length; i++)
@@ -266,7 +255,7 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
                 radius: 14,
-                backgroundColor: const Color(0xFF7EA29C),
+                backgroundColor: AppColors.teal500,
                 child: Text(
                   '${i + 1}',
                   style: const TextStyle(color: AppColors.white, fontSize: 14),
@@ -274,7 +263,7 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
               ),
               title: Text(_steps[i]),
               trailing: IconButton(
-                icon: const Icon(Icons.close, size: 20),
+                icon: Icon(Icons.close, size: 20),
                 onPressed: () => setState(() => _steps.removeAt(i)),
               ),
             ),
@@ -294,10 +283,10 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
           decoration: const InputDecoration(hintText: 'Contoh: Ambil kotak mainan.'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Batal')),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Tambah'),
+            child: Text('Tambah'),
           ),
         ],
       ),
@@ -311,17 +300,17 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nama Aktivitas'),
+        title: Text('Nama Aktivitas'),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: const InputDecoration(hintText: 'Contoh: Merapikan mainan'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Batal')),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Simpan'),
+            child: Text('Simpan'),
           ),
         ],
       ),
@@ -330,12 +319,34 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
     if (trimmed != null && trimmed.isNotEmpty) setState(() => _title = trimmed);
   }
 
+  /// Uploads a photo and points the card at it. The child profile must exist
+  /// first, since the storage path is scoped per child.
+  Future<void> _upload(ImageSource source) async {
+    setState(() => _isUploading = true);
+    try {
+      final child = await ref.read(currentChildProvider.future);
+      if (child == null) throw StateError('Profil anak belum tersedia.');
+
+      final url = await ref.read(imageUploadServiceProvider).pickAndUpload(
+            childId: child.id,
+            source: source,
+            folder: 'activities',
+          );
+      // null means the parent closed the picker — not an error.
+      if (url != null && mounted) setState(() => _image = url);
+    } catch (e) {
+      if (mounted) showBoardSnack(context, 'Gagal mengunggah gambar: $e');
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
   Future<void> _pickImage() async {
     final images = ActivityCatalog.availableImages;
     final picked = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Pilih Gambar'),
+        title: Text('Pilih Gambar'),
         content: SizedBox(
           width: 360,
           child: GridView.count(
@@ -352,10 +363,10 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
                           color: AppColors.neutral200,
                           borderRadius: BorderRadius.circular(12),
                           border: path == _image
-                              ? Border.all(color: const Color(0xFF446860), width: 3)
+                              ? Border.all(color: AppColors.teal700, width: 3)
                               : null,
                         ),
-                        child: Image.asset(path, fit: BoxFit.contain),
+                        child: ActivityImage(path),
                       ),
                     ))
                 .toList(),

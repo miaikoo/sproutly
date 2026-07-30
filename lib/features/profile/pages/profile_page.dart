@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/data/activity_catalog.dart';
 import '../../../core/services/child_service.dart';
+import '../../../core/services/image_upload_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../models/child.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../shared/widgets/activity_image.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 const _severityLabels = {
   Severity.mild: 'Ringan',
@@ -71,16 +75,9 @@ class ProfilePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Profil Anak',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-              height: 1.17,
-              letterSpacing: -0.72,
-            ),
+            style: AppTextStyles.displayL,
           ),
         ],
       ),
@@ -88,20 +85,9 @@ class ProfilePage extends ConsumerWidget {
   }
 }
 
-const _body = TextStyle(
-  color: AppColors.textPrimary,
-  fontSize: 16,
-  fontFamily: 'Nunito',
-  fontWeight: FontWeight.w400,
-);
+final _body = AppTextStyles.bodyM;
 
-const _sectionLabel = TextStyle(
-  color: AppColors.textPrimary,
-  fontSize: 16,
-  fontFamily: 'Nunito',
-  fontWeight: FontWeight.w700,
-  letterSpacing: 0.56,
-);
+final _sectionLabel = AppTextStyles.headingS;
 
 class _ProfileBody extends ConsumerWidget {
   const _ProfileBody({required this.child});
@@ -118,7 +104,7 @@ class _ProfileBody extends ConsumerWidget {
         _headerCard(context, ref),
         const SizedBox(height: 32),
 
-        const Text('KARAKTERISTIK', style: _sectionLabel),
+        Text('KARAKTERISTIK', style: _sectionLabel),
         const SizedBox(height: 12),
         _row(
           label: 'Tanggal lahir',
@@ -167,16 +153,51 @@ class _ProfileBody extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 36,
-              backgroundColor: AppColors.neutral300,
-              child: ClipOval(
-                child: SvgPicture.asset(
-                  'assets/images/profile_pic.svg',
-                  width: 72,
-                  height: 72,
-                  fit: BoxFit.cover,
-                ),
+            GestureDetector(
+              onTap: () => _changePhoto(context, ref),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 36,
+                    backgroundColor: AppColors.neutral300,
+                    child: ClipOval(
+                      child: child.photoUrl.isEmpty
+                          ? SvgPicture.asset(
+                              'assets/images/profile_pic.svg',
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.network(
+                              child.photoUrl,
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => SvgPicture.asset(
+                                'assets/images/profile_pic.svg',
+                                width: 72,
+                                height: 72,
+                              ),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.peach500,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.photo_camera,
+                        size: 14,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 20),
@@ -188,13 +209,7 @@ class _ProfileBody extends ConsumerWidget {
                     child.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 24,
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.45,
-                    ),
+                    style: AppTextStyles.displayM,
                   ),
                   const SizedBox(height: 4),
                   Text('${child.ageInYears(DateTime.now())} tahun', style: _body),
@@ -222,12 +237,7 @@ class _ProfileBody extends ConsumerWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.headingL,
               ),
             ),
             Text(value, style: _body),
@@ -247,7 +257,7 @@ class _ProfileBody extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('AKTIVITAS BUATAN SENDIRI', style: _sectionLabel),
+        Text('AKTIVITAS BUATAN SENDIRI', style: _sectionLabel),
         const SizedBox(height: 12),
         if (child.customActivities.isEmpty)
           Text(
@@ -260,7 +270,7 @@ class _ProfileBody extends ConsumerWidget {
             runSpacing: 8,
             children: child.customActivities
                 .map((item) => Chip(
-                      avatar: Image.asset(item.image, fit: BoxFit.contain),
+                      avatar: ActivityImage(item.image),
                       label: Text(item.title),
                       onDeleted: () => _confirmRemove(context, ref, item),
                     ))
@@ -279,17 +289,63 @@ class _ProfileBody extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Hapus ${item.title}?'),
-        content: const Text(
+        content: Text(
           'Aktivitas ini tidak lagi bisa dipilih. Papan yang sudah memakainya tetap utuh.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Hapus')),
         ],
       ),
     );
-    if (confirmed == true) {
-      await _service(ref).removeCustomActivity(child.id, item);
+    if (confirmed != true) return;
+
+    await _service(ref).removeCustomActivity(child.id, item);
+    // Drop the uploaded photo too, otherwise deleting the card leaves the file
+    // behind in Storage forever. Bundled assets have nothing to clean up.
+    if (isUploadedImage(item.image)) {
+      await ref.read(imageUploadServiceProvider).deleteByUrl(item.image);
+    }
+  }
+
+  /// Replaces the child's photo. The old file is deleted afterwards so a parent
+  /// swapping photos a few times doesn't leave orphans in Storage.
+  Future<void> _changePhoto(BuildContext context, WidgetRef ref) async {
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text('Foto Anak'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+            child: Text('Ambil foto'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            child: Text('Pilih dari galeri'),
+          ),
+        ],
+      ),
+    );
+    if (source == null) return;
+
+    final uploader = ref.read(imageUploadServiceProvider);
+    try {
+      final url = await uploader.pickAndUpload(
+        childId: child.id,
+        source: source,
+        folder: 'profile',
+      );
+      if (url == null) return; // Parent closed the picker.
+
+      final previous = child.photoUrl;
+      await _service(ref).updateProfile(child.id, photoUrl: url);
+      if (previous.isNotEmpty) await uploader.deleteByUrl(previous);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Gagal mengunggah foto: $e')));
+      }
     }
   }
 
@@ -298,13 +354,13 @@ class _ProfileBody extends ConsumerWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nama Anak'),
+        title: Text('Nama Anak'),
         content: TextField(controller: controller, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Batal')),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Simpan'),
+            child: Text('Simpan'),
           ),
         ],
       ),
@@ -332,7 +388,7 @@ class _ProfileBody extends ConsumerWidget {
     final picked = await showDialog<Severity>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Tingkat Perkembangan'),
+        title: Text('Tingkat Perkembangan'),
         children: _severityLabels.entries
             .map((entry) => SimpleDialogOption(
                   onPressed: () => Navigator.pop(context, entry.key),
@@ -379,10 +435,10 @@ class _EditableTags extends StatelessWidget {
           decoration: InputDecoration(hintText: hint),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('Batal')),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Tambah'),
+            child: Text('Tambah'),
           ),
         ],
       ),
@@ -403,7 +459,7 @@ class _EditableTags extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: _sectionLabel),
-            TextButton(onPressed: () => _add(context), child: const Text('+ Tambah')),
+            TextButton(onPressed: () => _add(context), child: Text('+ Tambah')),
           ],
         ),
         const SizedBox(height: 8),

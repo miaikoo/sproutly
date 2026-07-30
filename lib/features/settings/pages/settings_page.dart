@@ -8,6 +8,7 @@ import '../../../core/services/child_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -115,16 +116,9 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Pengaturan',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-              height: 1.17,
-              letterSpacing: -0.72,
-            ),
+            style: AppTextStyles.displayL,
           ),
         ],
       ),
@@ -166,23 +160,12 @@ class SettingsPage extends ConsumerWidget {
                 children: [
                   Text(
                     childName,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 24,
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.45,
-                    ),
+                    style: AppTextStyles.displayM,
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Lihat dan ubah profil anak',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: AppTextStyles.bodyM,
                   ),
                 ],
               ),
@@ -206,13 +189,7 @@ class SettingsPage extends ConsumerWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.56,
-            ),
+            style: AppTextStyles.labelL,
           ),
         ),
         child,
@@ -250,22 +227,12 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextStyles.headingL,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w400,
-                  ),
+                  style: AppTextStyles.bodyS,
                 ),
               ],
             ),
@@ -289,13 +256,7 @@ class SettingsPage extends ConsumerWidget {
           padding: EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
             'TENTANG',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.56,
-            ),
+            style: AppTextStyles.labelL,
           ),
         ),
         Container(
@@ -307,11 +268,11 @@ class SettingsPage extends ConsumerWidget {
           child: Column(
             children: [
               _buildAboutItem('assets/icons/ix_about.svg', 'Tentang Sprout.ly'),
-              Divider(height: 1, color: AppColors.neutral800.withOpacity(0.15), indent: 16, endIndent: 16),
+              Divider(height: 1, color: AppColors.neutral800.withValues(alpha: 0.15), indent: 16, endIndent: 16),
               _buildAboutItem('assets/icons/material-symbols_privacy-tip-outline-rounded.svg', 'Kebijakan Privasi'),
-              Divider(height: 1, color: AppColors.neutral800.withOpacity(0.15), indent: 16, endIndent: 16),
+              Divider(height: 1, color: AppColors.neutral800.withValues(alpha: 0.15), indent: 16, endIndent: 16),
               _buildAboutItem('assets/icons/material-symbols_text-snippet-outline-rounded.svg', 'Ketentuan Layanan'),
-              Divider(height: 1, color: AppColors.neutral800.withOpacity(0.15), indent: 16, endIndent: 16),
+              Divider(height: 1, color: AppColors.neutral800.withValues(alpha: 0.15), indent: 16, endIndent: 16),
               _buildAboutItem('assets/icons/material-symbols_support.svg', 'Dukungan Pelanggan'),
             ],
           ),
@@ -334,12 +295,7 @@ class SettingsPage extends ConsumerWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.headingL,
             ),
           ),
           const CustomIcon(
@@ -358,11 +314,11 @@ class SettingsPage extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Keluar dari akun?'),
-        content: const Text('Anda perlu masuk kembali untuk mengakses data anak.'),
+        title: Text('Keluar dari akun?'),
+        content: Text('Anda perlu masuk kembali untuk mengakses data anak.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Keluar')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Keluar')),
         ],
       ),
     );
@@ -390,15 +346,10 @@ class SettingsPage extends ConsumerWidget {
             color: AppColors.white,
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Text(
               'Keluar',
-              style: TextStyle(
-                color: AppColors.white,
-                fontSize: 20,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.displayM.copyWith(color: AppColors.white),
             ),
           ),
           const CustomIcon(

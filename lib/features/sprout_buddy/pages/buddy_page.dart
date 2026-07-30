@@ -13,6 +13,7 @@ import '../../../models/enums.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../shared/widgets/activity_image.dart';
 
 /// How the AI's suggested prompting strategy reads to a parent.
 const _promptStrategyLabels = {
@@ -73,8 +74,8 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
           end: Alignment.bottomCenter,
           colors: [
             AppColors.background,
-            AppColors.background.withOpacity(0.8),
-            AppColors.background.withOpacity(0.0),
+            AppColors.background.withValues(alpha: 0.8),
+            AppColors.background.withValues(alpha: 0.0),
           ],
           stops: const [0.3, 0.7, 1.0],
         ),
@@ -87,24 +88,14 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'SproutGuide',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayL,
               ),
               const SizedBox(height: 4),
               Text(
                 'Rekomendasi aktivitas berbasis AI',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.headingS,
               ),
             ],
           ),
@@ -178,16 +169,16 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
       width: 100,
       height: 70,
       decoration: ShapeDecoration(
-        color: isActive ? const Color(0xFFF1F5F4) : const Color(0xFFB8D2CE),
+        color: isActive ? AppColors.neutral100 : AppColors.teal300,
         shape: OvalBorder(
           side: BorderSide(
-            color: isActive ? AppColors.neutral300 : const Color(0xFF7EA29C),
+            color: isActive ? AppColors.neutral300 : AppColors.teal500,
             width: 3,
           ),
         ),
         shadows: [
           BoxShadow(
-            color: isActive ? AppColors.neutral300 : const Color(0xFF7EA29C),
+            color: isActive ? AppColors.neutral300 : AppColors.teal500,
             offset: const Offset(0, 8),
             blurRadius: 0,
           ),
@@ -251,8 +242,8 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _fetchAnalysis,
-            icon: const Icon(Icons.insights_outlined, size: 20),
-            label: const Text('Analisis Perkembangan'),
+            icon: Icon(Icons.insights_outlined, size: 20),
+            label: Text('Analisis Perkembangan'),
           ),
         ),
       ],
@@ -293,7 +284,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
           width: double.infinity,
           child: OutlinedButton(
             onPressed: () => setState(() => _analysis = null),
-            child: const Text('Tutup'),
+            child: Text('Tutup'),
           ),
         ),
       ],
@@ -334,7 +325,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
                 color: AppColors.neutral200,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Image.asset(catalogItem.image, fit: BoxFit.contain),
+              child: ActivityImage(catalogItem.image),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -358,7 +349,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
         // it. Showing it is the whole point of a decision-support system.
         Row(
           children: [
-            const Icon(Icons.tips_and_updates_outlined, size: 18, color: AppColors.teal500),
+            Icon(Icons.tips_and_updates_outlined, size: 18, color: AppColors.teal500),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -374,7 +365,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => setState(() => _recommendation = null),
-                child: const Text('Abaikan'),
+                child: Text('Abaikan'),
               ),
             ),
             const SizedBox(width: 12),
@@ -382,7 +373,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
               child: FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: AppColors.teal500),
                 onPressed: () => _acceptRecommendation(rec),
-                child: const Text('Tambahkan'),
+                child: Text('Tambahkan'),
               ),
             ),
           ],

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/app_routes.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class CreateBoardPage extends StatefulWidget {
   const CreateBoardPage({super.key});
@@ -30,15 +31,10 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Papan apa yang ingin kamu buat?',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 28,
-                            fontFamily: 'Nunito',
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: AppTextStyles.displayL,
                         ),
                         const SizedBox(height: 32),
                         _buildOptionCard('Aktivitas'),
@@ -74,14 +70,9 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Buat Papan Baru',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.displayM,
           ),
         ],
       ),
@@ -105,8 +96,8 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
           color: AppColors.teal100,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            // Ganti Color(0xFF446860) jadi AppColors.teal700 (atau warna gelap andalanmu)
-            color: isSelected ? AppColors.teal700 : AppColors.neutral800.withOpacity(0.2),
+            // Ganti AppColors.teal700 jadi AppColors.teal700 (atau warna gelap andalanmu)
+            color: isSelected ? AppColors.teal700 : AppColors.neutral800.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -131,12 +122,7 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 24,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayM,
               ),
             ),
             
@@ -147,7 +133,7 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.teal700 : AppColors.neutral800.withOpacity(0.5),
+                  color: isSelected ? AppColors.teal700 : AppColors.neutral800.withValues(alpha: 0.5),
                   width: 2,
                 ),
               ),
@@ -192,15 +178,10 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
           color: isEnabled ? AppColors.peach500 : AppColors.peach100,
           borderRadius: BorderRadius.circular(36),
         ),
-        child: const Text(
+        child: Text(
           'Selanjutnya',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: AppColors.white,
-            fontSize: 20,
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.displayM.copyWith(color: AppColors.white),
         ),
       ),
     );

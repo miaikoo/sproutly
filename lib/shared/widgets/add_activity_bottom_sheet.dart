@@ -8,6 +8,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/navigation/app_routes.dart';
 import '../../models/enums.dart';
 import 'custom_icon.dart';
+import 'activity_image.dart';
+import '../../core/theme/app_text_styles.dart';
 
 class AddActivityBottomSheet extends ConsumerStatefulWidget {
   const AddActivityBottomSheet({super.key, this.only, this.title});
@@ -60,7 +62,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
       width: double.infinity, 
       padding: EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 24 + bottomPadding),
       decoration: const BoxDecoration(
-        color: Color(0xFFFAFCFB),
+        color: AppColors.surface,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
@@ -75,7 +77,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
               width: 144,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -89,12 +91,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
               Expanded(
                 child: Text(
                   widget.title ?? 'Tambahkan Aktivitas',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 26,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextStyles.displayL,
                 ),
               ),
               GestureDetector(
@@ -103,21 +100,16 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                   context.push(AppRoutes.createActivity); 
                 },
                 child: Row(
-                  children: const [
+                  children: [
                     CustomIcon(
                       assetName: 'assets/icons/solar_clipboard-add-outline.svg',
                       size: 22,
-                      color: Color(0xFFC4806C),
+                      color: AppColors.actionPrimary,
                     ),
                     SizedBox(width: 6),
                     Text(
                       'Buat Baru',
-                      style: TextStyle(
-                        color: Color(0xFFC4806C),
-                        fontSize: 20,
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.headingL.copyWith(color: AppColors.actionPrimary),
                     ),
                   ],
                 ),
@@ -140,17 +132,12 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF446860) : const Color(0xFF7EA29C),
+                        color: isSelected ? AppColors.teal700 : AppColors.teal500,
                         borderRadius: BorderRadius.circular(36),
                       ),
                       child: Text(
                         cat,
-                        style: const TextStyle(
-                          color: AppColors.white,
-                          fontSize: 16,
-                          fontFamily: 'Nunito',
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.headingS.copyWith(color: AppColors.white),
                       ),
                     ),
                   ),
@@ -194,16 +181,16 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                               color: AppColors.neutral300,
                               borderRadius: BorderRadius.circular(16),
                               border: isSelected
-                                  ? Border.all(color: const Color(0xFF446860), width: 4)
+                                  ? Border.all(color: AppColors.teal700, width: 4)
                                   : null,
                             ),
                             child: Stack(
                               children: [
-                                Image.asset(item.image, fit: BoxFit.contain),
+                                ActivityImage(item.image),
                                 if (isSelected)
                                   const Align(
                                     alignment: Alignment.topRight,
-                                    child: Icon(Icons.check_circle, color: Color(0xFF446860)),
+                                    child: Icon(Icons.check_circle, color: AppColors.teal700),
                                   ),
                               ],
                             ),
@@ -212,12 +199,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                         const SizedBox(height: 8),
                         Text(
                           item.title,
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 16,
-                            fontFamily: 'Nunito',
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                          ),
+                          style: AppTextStyles.bodyM,
                         ),
                       ],
                     ),
@@ -239,15 +221,10 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                 color: _selectedActivity != null ? AppColors.peach500 : AppColors.peach100,
                 borderRadius: BorderRadius.circular(36),
               ),
-              child: const Text(
+              child: Text(
                 'Selanjutnya',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontSize: 20,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayM.copyWith(color: AppColors.white),
               ),
             ),
           ),

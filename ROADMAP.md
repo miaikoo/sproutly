@@ -13,8 +13,13 @@ Alur yang sudah jalan end-to-end:
 register/login → buat schedule board → jalankan aktivitas (TTS + catat mood & transisi)
 → analytics → laporan → hubungkan terapis → catatan terapis.
 
-Kasaran penyelesaian: **~55%** saat audit. Setelah P0–P2: **14 RF terpenuhi**,
-67 test lolos, `flutter analyze` 0 error 0 warning.
+Kasaran penyelesaian: **~55%** saat audit. Setelah P0–P2: **13,5 dari 14 RF**,
+75 test lolos, `flutter analyze` 0 error 0 warning.
+
+Koreksi: sempat ditulis "14 RF terpenuhi" — itu kelewat murah hati. RF-06 minta tiga hal
+("**pengingat**, instruksi bertahap, dan bantuan verbal"); instruksi bertahap dan bantuan
+verbal sudah jalan, tapi **pengingat belum ada** (`notification_service.dart` masih 0 byte).
+Ditutup di P3.
 
 ## Peta RF-01 → RF-14
 
@@ -115,8 +120,79 @@ rutinitas — catat lewat halaman aktivitas tunggal kalau perlu).
 
 ## P3 — pelengkap & deliverable dokumen
 
-- [ ] Notifikasi pengingat (butuh package baru)
-- [ ] Firebase Storage buat foto anak & gambar aktivitas kustom
-- [ ] Isi doc: screenshot SproutTrack & SproutLink (dua-duanya udah jadi, tinggal capture)
-- [ ] Isi doc: link APK + kredensial uji
-- [ ] Test case black-box + kuesioner SUS buat bab Evaluasi
+- [x] **Notifikasi pengingat** (RF-06, bagian yang tadinya bolong).
+      `notification_service.dart` tadinya 0 byte, sekarang jalan: pengingat dijadwalkan
+      per aktivitas di papan jadwal. Logikanya fungsi murni (`remindersFor`,
+      `remindersForAll`, `notificationId`) dengan 14 test — hanya papan jadwal yang
+      dapat pengingat, aktivitas yang sudah lewat atau sudah selesai dilewati.
+      Wiring-nya satu tempat (`reminderSyncProvider` di app shell) jadi buat/ubah/hapus
+      papan otomatis ke-sync tanpa nambah call site.
+      Perlu diketahui: plugin ini **wajib** core library desugaring — sudah ditambahkan
+      ke `android/app/build.gradle.kts`, tanpa itu build Android gagal total.
+- [x] Test case black-box → `PENGUJIAN_FUNGSIONAL.md` (63 skenario, dipetakan ke RF-01…RF-14
+      + RNF, format siap dikutip ke bab Evaluasi §7)
+- [x] Instrumen usability → `EVALUASI_USABILITY.md` (10 tugas task-based + kuesioner SUS
+      10 pernyataan + cara hitung & tafsir skor, buat §7.2)
+- [x] **Firebase Storage** buat foto anak & gambar aktivitas kustom.
+      `image_upload_service.dart`: foto dikecilkan ke maks 800px + kualitas 80 sebelum
+      diunggah (foto HP mentah beberapa MB padahal cuma ditampilkan di kartu kecil).
+      Path-nya `children/{childId}/...` supaya `storage.rules` bisa cek kepemilikan;
+      terapis boleh lihat tapi tidak boleh mengubah, dan upload dibatasi 5MB + harus
+      `image/*`. Foto lama dihapus saat diganti, dan gambar aktivitas kustom ikut terhapus
+      saat kartunya dihapus — kalau tidak, file menumpuk di Storage selamanya.
+      `photoUrl` di `Child` sebelumnya selalu kosong, sekarang kepakai.
+      **Masih perlu: `firebase deploy --only storage`.**
+- [x] `ActivityImage` — satu widget yang otomatis pilih `Image.asset` atau `Image.network`.
+      Ada 15 tempat yang render gambar aktivitas pakai `Image.asset`; tanpa widget ini
+      semuanya crash begitu ada aktivitas kustom berisi URL. Sekalian dapat indikator
+      loading dan penanganan gambar rusak, jadi satu foto gagal tidak menjatuhkan papan.
+- [ ] Isi doc: screenshot SproutTrack & SproutLink — **tertunda**, UI masih perlu dirapikan
+      dulu (kata user "UI-nya masih busuk"), screenshot sekarang cuma bikin proposal jelek
+- [ ] Isi doc: link APK + kredensial uji. Dua-duanya perlu tindakan kamu:
+      APK harus diunggah ke tempat yang bisa diakses publik, dan kredensial uji berarti
+      membuat akun sungguhan di Firebase project. Aku tidak melakukannya sendiri karena
+      keduanya keluar dari mesin ini.
+      Catatan: `android/app/build.gradle.kts` masih menandatangani build release dengan
+      **kunci debug** (ada `TODO`-nya). Cukup untuk APK demo yang diunduh manual, tapi
+      tidak bisa dipakai kalau nanti masuk Play Store.
+- [ ] Jalankan `PENGUJIAN_FUNGSIONAL.md` di tablet nyata — **belum pernah dijalankan
+      di perangkat sama sekali**, semua klaim sejauh ini dari unit test + analyze
+
+## P4 — Rapikan UI ✅ SELESAI
+
+Ditulis lengkap di `DESIGN.md`. Ringkasnya, dan temuannya lebih berat dari dugaan:
+
+- [x] **Kontras gagal WCAG di seluruh tombol utama.** Teks putih di `peach500` = 2.74:1
+      (butuh 4.5). Label bottom nav putih di `teal300` = **1.74:1**. Pesan error
+      `peach500` = 2.64:1 — orang tua tidak bisa membaca kenapa simpanannya gagal.
+      Perbaikannya **tidak butuh warna baru**: token level-700 sudah ada dan lulus
+      (putih di `peach700` 6.47). Identitas Figma utuh, pasangannya yang dibetulkan.
+- [x] **`neutral300` ternyata mauve** (`#DCCAD7`, spread 18) di ramp yang semuanya
+      kehijauan — dan itu alas setiap gambar aktivitas, jadi seluruh ilustrasi anak
+      duduk di kartu pink. Diganti netral sungguhan + token `imagePlate` sendiri.
+- [x] **Nunito tidak pernah ada.** Tidak ada `fonts:` di pubspec, tidak ada
+      `assets/fonts/`. Semua 76 `fontFamily: 'Nunito'` jatuh ke Roboto sejak awal.
+      Nama font hantu dihapus; cara memasang Nunito sungguhan didokumentasikan di
+      `AppTextStyles`. (Sempat coba `google_fonts`, dibatalkan: versi 8 menarik
+      `jni`/`objective_c`/`code_assets` — native assets, terlalu berisiko.)
+- [x] **41 warna mentah dan 62 `TextStyle` hardcode** dipetakan ke token. Sebagian besar
+      beda tipis dari token yang sudah ada (`0xFF446860` vs `teal700` `0xFF446B60`) —
+      di-eyedrop dari mockup, bukan diambil dari sistem.
+- [x] **Bottom nav → Material `NavigationBar`, plus `NavigationRail` di ≥600dp.**
+      `android.md` eksplisit: jangan kirim bottom bar ponsel apa adanya ke tablet.
+- [x] Target sentuh 48dp minimum, diatur sekali di `AppTheme`.
+- [x] Motion menghormati "Remove animations" lewat `AppTheme.motion()` — bukan
+      formalitas untuk audiens yang sensitif gerakan.
+- [x] Runner: indikator progres visual (segmen aktivitas + titik langkah), karena
+      "Langkah 2 dari 6" itu teks yang anak belum tentu bisa baca. Prediktabilitas
+      justru inti dari visual schedule.
+- [x] Empty state mengajari antarmukanya, bukan bilang "tidak ada apa-apa".
+- [x] `ActivityImage` dan `BoardTile` jadi komponen bersama (dulu 15 `Image.asset`
+      terpisah dan 2 salinan tile yang sudah mulai beda).
+- [x] Label enum diganti bahasa manusia: `meltdown` → "kewalahan", `high` → "sulit".
+
+**`flutter analyze`: No issues found** — dari 48 issue saat audit awal jadi nol.
+88 test lolos, build Android sukses.
+
+Belum diputuskan: **tema gelap** (Material menganggapnya first-class, `AppTheme` baru
+punya `light`) dan **screenshot §5.5/§5.6** yang sekarang sudah tidak terhalang lagi.

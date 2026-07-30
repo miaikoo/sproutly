@@ -114,7 +114,7 @@ class LandingPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.all(AppRadius.lg),
-        border: Border.all(color: AppColors.neutral800.withOpacity(0.1), width: 1),
+        border: Border.all(color: AppColors.neutral800.withValues(alpha: 0.1), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

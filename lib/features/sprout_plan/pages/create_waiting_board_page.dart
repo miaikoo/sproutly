@@ -10,6 +10,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
+import '../../../shared/widgets/activity_image.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class CreateWaitingBoardPage extends ConsumerStatefulWidget {
   const CreateWaitingBoardPage({super.key});
@@ -48,14 +50,9 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
                               _buildTitleInput(),
                               const SizedBox(height: 32),
 
-                              const Text(
+                              Text(
                                 'Aku',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 24,
-                                  fontFamily: 'Nunito',
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: AppTextStyles.displayM,
                               ),
                               const SizedBox(height: 16),
 
@@ -66,14 +63,9 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
                               ),
                               const SizedBox(height: 16),
 
-                              const Text(
+                              Text(
                                 'selama',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 24,
-                                  fontFamily: 'Nunito',
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: AppTextStyles.displayM,
                               ),
                               const SizedBox(height: 24),
 
@@ -115,12 +107,7 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
                 _title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayL,
               ),
             ),
           ),
@@ -170,12 +157,7 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
                 _title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayM,
               ),
             ),
             const CustomIcon(
@@ -211,12 +193,7 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
             ),
             child: Text(
               formatWait(_waitMinutes),
-              style: const TextStyle(
-                color: AppColors.white,
-                fontSize: 28,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.w700,
-              ),
+              style: AppTextStyles.displayL.copyWith(color: AppColors.white),
             ),
           ),
         ),
@@ -237,15 +214,10 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             'kemudian aku bisa melakukan...',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.white,
-              fontSize: 22,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.headingL.copyWith(color: AppColors.white),
           ),
           const SizedBox(height: 24),
           Row(
@@ -256,16 +228,11 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
                 activityId: _thenAId,
                 onTap: () => _pick((id) => _thenAId = id),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
                   'Atau',
-                  style: TextStyle(
-                    color: AppColors.white,
-                    fontSize: 20,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.headingL.copyWith(color: AppColors.white),
                 ),
               ),
               _buildAddBox(
@@ -308,17 +275,12 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Expanded(child: Image.asset(item.image, fit: BoxFit.contain)),
+        Expanded(child: ActivityImage(item.image)),
         Text(
           item.title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 12,
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.caption,
         ),
       ],
     );

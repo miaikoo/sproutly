@@ -10,6 +10,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
+import '../../../shared/widgets/activity_image.dart';
+import '../../../core/theme/app_text_styles.dart';
 
 class CreateFirstThenBoardPage extends ConsumerStatefulWidget {
   const CreateFirstThenBoardPage({super.key});
@@ -50,7 +52,7 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
                           child: CustomIcon(
                             assetName: 'assets/icons/down_arrow.svg',
                             size: 40,
-                            color: Color(0xFFC4806C),
+                            color: AppColors.actionPrimary,
                           ),
                         ),
                         _buildStepCard(
@@ -91,12 +93,7 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
                 _title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.displayL,
               ),
             ),
           ),
@@ -133,19 +130,14 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFD2E2EE),
+        color: AppColors.steel100,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.displayM,
           ),
           const SizedBox(height: 24),
           GestureDetector(
@@ -155,7 +147,7 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
               height: 160,
               decoration: BoxDecoration(
                 color: AppColors.white.withValues(alpha: 0.5),
-                border: Border.all(color: const Color(0xFF7B9DB8), width: 2),
+                border: Border.all(color: AppColors.steel500, width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: activityId == null
@@ -163,7 +155,7 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
                       child: CustomIcon(
                         assetName: 'assets/icons/solar_clipboard-add-outline.svg',
                         size: 36,
-                        color: Color(0xFF7B9DB8),
+                        color: AppColors.steel500,
                       ),
                     )
                   : _slotPreview(activityId),
@@ -181,16 +173,11 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(child: Image.asset(item.image, fit: BoxFit.contain)),
+          Expanded(child: ActivityImage(item.image)),
           const SizedBox(height: 4),
           Text(
             item.title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.headingS,
           ),
         ],
       ),

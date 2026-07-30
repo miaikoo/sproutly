@@ -2,50 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/navigation/app_routes.dart';
 import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../models/activity.dart';
+import '../../../models/child.dart';
 import '../../../models/enums.dart';
 import '../../../models/schedule.dart';
+import '../../../shared/widgets/activity_image.dart';
 import '../../sprout_plan/pages/board_editor.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
-
-  static const _backgroundColor = AppColors.background;
-  static const _cardBackground = AppColors.teal100;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final childAsync = ref.watch(currentChildProvider);
 
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  _buildHeader(context, childAsync.valueOrNull?.name),
-                  const SizedBox(height: 24),
-                  childAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text('Gagal memuat profil anak: $e', style: _bodyStyle),
-                    data: (child) => child == null
-                        ? Text('Profil anak belum tersedia.', style: _bodyStyle)
-                        : _ChildSections(childId: child.id),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+            constraints: const BoxConstraints(maxWidth: 840),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                AppSpacing.md,
+                AppSpacing.xl,
+                AppSpacing.xxl,
               ),
+              children: [
+                _Greeting(child: childAsync.valueOrNull),
+                AppSpacing.gapXL,
+                childAsync.when(
+                  loading: () => const _PanelSkeleton(),
+                  error: (e, _) => _Notice(
+                    icon: Icons.cloud_off_outlined,
+                    message: 'Gagal memuat profil anak.',
+                    detail: '$e',
+                  ),
+                  data: (child) => child == null
+                      ? const _Notice(
+                          icon: Icons.person_outline,
+                          message: 'Profil anak belum tersedia.',
+                          detail: 'Daftarkan profil anak untuk mulai menyusun rutinitas.',
+                        )
+                      : _ChildSections(childId: child.id),
+                ),
+              ],
             ),
           ),
         ),
@@ -59,98 +70,83 @@ class HomePage extends ConsumerWidget {
     if (now.hour < 18) return 'Selamat sore';
     return 'Selamat malam';
   }
+}
 
-  Widget _buildHeader(BuildContext context, String? childName) {
+class Home extends HomePage {
+  const Home({super.key});
+}
+
+class _Greeting extends StatelessWidget {
+  const _Greeting({required this.child});
+
+  final Child? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = child?.name;
+    final photoUrl = child?.photoUrl ?? '';
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        _Avatar(photoUrl: photoUrl, radius: 28),
+        AppSpacing.gapHMD,
         Expanded(
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Avatar profile picture
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: AppColors.neutral300,
-                child: ClipOval(
-                  child: SvgPicture.asset(
-                    'assets/images/profile_pic.svg',
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      greetingFor(DateTime.now()),
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Text(
-                      childName ?? '...',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 24,
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.45,
-                      ),
-                    ),
-                  ],
-                ),
+              Text(HomePage.greetingFor(DateTime.now()), style: AppTextStyles.caption),
+              Text(
+                name ?? 'Memuat…',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.displayM,
               ),
             ],
           ),
         ),
-        // Settings Routing
-        GestureDetector(
-          onTap: () {
-            context.push(AppRoutes.settings);
-          },
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Colors.transparent,
-            ),
-            child: const Icon(
-              Icons.settings,
-              color: AppColors.neutral800,
-              size: 28,
-            ),
-          ),
+        IconButton(
+          onPressed: () => context.push(AppRoutes.settings),
+          icon: Icon(Icons.settings_outlined),
+          tooltip: 'Pengaturan',
         ),
       ],
     );
   }
 }
 
-const _bodyStyle = TextStyle(
-  color: AppColors.textPrimary,
-  fontSize: 16,
-  fontFamily: 'Nunito',
-  fontWeight: FontWeight.w400,
-);
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.photoUrl, required this.radius});
 
-const _sectionTitleStyle = TextStyle(
-  color: AppColors.textPrimary,
-  fontSize: 20,
-  fontFamily: 'Nunito',
-  fontWeight: FontWeight.w600,
-);
+  final String photoUrl;
+  final double radius;
 
-class Home extends HomePage {
-  const Home({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppColors.teal100,
+      child: ClipOval(
+        child: photoUrl.isEmpty
+            ? SvgPicture.asset(
+                'assets/images/profile_pic.svg',
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+              )
+            : Image.network(
+                photoUrl,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => SvgPicture.asset(
+                  'assets/images/profile_pic.svg',
+                  width: radius * 2,
+                  height: radius * 2,
+                ),
+              ),
+      ),
+    );
+  }
 }
 
 /// The two data-backed sections: the activity in progress and the board grid.
@@ -164,21 +160,36 @@ class _ChildSections extends ConsumerWidget {
     final schedulesAsync = ref.watch(schedulesForChildProvider(childId));
 
     return schedulesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Text('Gagal memuat papan: $e', style: _bodyStyle),
+      loading: () => const _PanelSkeleton(),
+      error: (e, _) => _Notice(
+        icon: Icons.cloud_off_outlined,
+        message: 'Gagal memuat papan.',
+        detail: '$e',
+      ),
       data: (schedules) {
         final pending = nextPendingActivity(schedules);
+        final hasScheduleBoard = schedules.any((s) => s.type == BoardType.schedule);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Sedang dikerjakan', style: _sectionTitleStyle),
-            const SizedBox(height: 12),
+            const _SectionTitle('Sedang dikerjakan'),
+            AppSpacing.gapSM,
             if (pending == null)
-              _EmptyCard(
-                message: schedules.any((s) => s.type == BoardType.schedule)
-                    ? 'Semua aktivitas hari ini sudah selesai. Hebat!'
-                    : 'Belum ada papan jadwal. Buat papan di menu Papan untuk mulai.',
+              _Notice(
+                icon: hasScheduleBoard ? Icons.check_circle_outline : Icons.event_note_outlined,
+                message: hasScheduleBoard
+                    ? 'Semua aktivitas hari ini sudah selesai.'
+                    : 'Belum ada papan jadwal.',
+                detail: hasScheduleBoard
+                    ? 'Kerja bagus. Papan akan terisi lagi besok.'
+                    : 'Buka menu Papan untuk menyusun rutinitas pertama.',
+                action: hasScheduleBoard
+                    ? null
+                    : (
+                        'Buat papan',
+                        () => context.push(AppRoutes.createBoard),
+                      ),
               )
             else
               _CurrentTaskCard(
@@ -186,33 +197,41 @@ class _ChildSections extends ConsumerWidget {
                 scheduleTitle: pending.scheduleTitle,
                 activity: pending.activity,
               ),
-            const SizedBox(height: 32),
-            const Text('Papan saya', style: _sectionTitleStyle),
-            const SizedBox(height: 16),
+            AppSpacing.gapXXL,
+            Row(
+              children: [
+                const Expanded(child: _SectionTitle('Papan saya')),
+                if (schedules.isNotEmpty)
+                  TextButton(
+                    onPressed: () => context.go(AppRoutes.board),
+                    child: Text('Lihat semua'),
+                  ),
+              ],
+            ),
+            AppSpacing.gapSM,
             if (schedules.isEmpty)
-              _EmptyCard(message: 'Belum ada papan yang dibuat.')
+              const _Notice(
+                icon: Icons.dashboard_customize_outlined,
+                message: 'Belum ada papan yang dibuat.',
+                detail: 'Papan adalah kumpulan kartu bergambar yang menuntun anak '
+                    'menjalani rutinitas.',
+              )
             else
-              _buildBoardGrid(schedules),
+              _BoardGrid(schedules: schedules),
           ],
         );
       },
     );
   }
+}
 
-  Widget _buildBoardGrid(List<Schedule> schedules) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.80,
-      ),
-      itemCount: schedules.length,
-      itemBuilder: (context, index) => _BoardCard(schedule: schedules[index]),
-    );
-  }
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(text, style: AppTextStyles.headingL);
 }
 
 /// The earliest not-yet-completed activity across the child's schedule boards,
@@ -234,21 +253,102 @@ class _ChildSections extends ConsumerWidget {
   return pending.isEmpty ? null : pending.first;
 }
 
-class _EmptyCard extends StatelessWidget {
-  const _EmptyCard({required this.message});
+typedef _NoticeAction = (String label, VoidCallback onPressed);
 
+/// Empty, error and done states. One shape for all three so the page reads
+/// consistently instead of each state inventing its own layout.
+class _Notice extends StatelessWidget {
+  const _Notice({
+    required this.icon,
+    required this.message,
+    this.detail,
+    this.action,
+  });
+
+  final IconData icon;
   final String message;
+  final String? detail;
+  final _NoticeAction? action;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: HomePage._cardBackground,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: AppRadius.card,
+        border: Border.all(color: AppColors.divider),
       ),
-      child: Text(message, style: _bodyStyle),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: AppColors.textSecondary, size: 22),
+          AppSpacing.gapHSM,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(message, style: AppTextStyles.headingS),
+                if (detail != null) ...[
+                  AppSpacing.gapXXS,
+                  Text(detail!, style: AppTextStyles.bodyS.copyWith(
+                    color: AppColors.textSecondary,
+                  )),
+                ],
+                if (action != null) ...[
+                  AppSpacing.gapXS,
+                  FilledButton(
+                    onPressed: action!.$2,
+                    child: Text(action!.$1),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder shaped like the content it replaces, so nothing jumps when the
+/// data arrives.
+class _PanelSkeleton extends StatelessWidget {
+  const _PanelSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget block(double height) => Container(
+          height: height,
+          decoration: BoxDecoration(
+            color: AppColors.neutral200,
+            borderRadius: AppRadius.card,
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle('Sedang dikerjakan'),
+        AppSpacing.gapSM,
+        block(104),
+        AppSpacing.gapXXL,
+        const _SectionTitle('Papan saya'),
+        AppSpacing.gapSM,
+        SizedBox(
+          height: 150,
+          child: Row(
+            children: [
+              Expanded(child: block(150)),
+              AppSpacing.gapHMD,
+              Expanded(child: block(150)),
+              AppSpacing.gapHMD,
+              Expanded(child: block(150)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -266,107 +366,85 @@ class _CurrentTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.activityPath(scheduleId, activity.id)),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: HomePage._cardBackground,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.neutral300,
-                borderRadius: BorderRadius.circular(16),
+    return Material(
+      color: AppColors.teal100,
+      borderRadius: AppRadius.card,
+      child: InkWell(
+        borderRadius: AppRadius.card,
+        onTap: () => context.push(AppRoutes.activityPath(scheduleId, activity.id)),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                padding: const EdgeInsets.all(AppSpacing.xs),
+                decoration: const BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: AppRadius.button,
+                ),
+                child: ActivityImage(activity.icon),
               ),
-              child: Image.asset(activity.icon, fit: BoxFit.contain),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    activity.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 24,
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.45,
+              AppSpacing.gapHMD,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activity.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.headingL,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    scheduleTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: _bodyStyle,
-                  ),
-                ],
+                    AppSpacing.gapXXS,
+                    Text(
+                      // Time first: it is the thing a parent scans for.
+                      '${DateFormat.Hm().format(activity.startTime)} · $scheduleTitle',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            // Arrow chevron_right (mengikuti figma)
-            const Icon(Icons.chevron_right, color: AppColors.neutral800, size: 32),
-          ],
+              AppSpacing.gapHXS,
+              Icon(Icons.chevron_right, color: AppColors.teal900, size: 28),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _BoardCard extends StatelessWidget {
-  const _BoardCard({required this.schedule});
+class _BoardGrid extends StatelessWidget {
+  const _BoardGrid({required this.schedules});
 
-  final Schedule schedule;
+  final List<Schedule> schedules;
 
   @override
   Widget build(BuildContext context) {
-    final thumbnail = schedule.activities.isNotEmpty ? schedule.activities.first.icon : null;
+    // Home shows a preview, not the whole library — the Papan tab is for that.
+    final visible = schedules.take(6).toList();
 
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.boardDetailPath(schedule.id)),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: boardColor(schedule.type),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: thumbnail != null
-                  ? Image.asset(thumbnail, fit: BoxFit.contain)
-                  : const Icon(Icons.event_note, color: AppColors.white, size: 40),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            schedule.title,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w600,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      // Fixed-width tiles that wrap, so a tablet fits more per row instead of
+      // stretching three tiles to fill the space.
+      final columns = (constraints.maxWidth / 168).floor().clamp(2, 5);
+
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          crossAxisSpacing: AppSpacing.md,
+          mainAxisSpacing: AppSpacing.md,
+          childAspectRatio: 0.82,
+        ),
+        itemCount: visible.length,
+        itemBuilder: (context, index) => BoardTile(schedule: visible[index]),
+      );
+    });
   }
 }

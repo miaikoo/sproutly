@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 import '../../../core/services/behaviour_log_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../models/behaviour_log.dart';
 import '../../../models/enums.dart';
 
@@ -93,15 +95,15 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
             else ...[
               _completionCard(logs),
               AppSpacing.gapXL,
-              Text('Suasana Hati', style: AppTextStyles.headingM),
+              Text('Suasana hati', style: AppTextStyles.headingM),
               AppSpacing.gapSM,
               _moodBreakdown(logs),
               AppSpacing.gapXL,
-              Text('Tren $_range Terakhir', style: AppTextStyles.headingM),
+              Text('Tren $_range terakhir', style: AppTextStyles.headingM),
               AppSpacing.gapSM,
               _trend(logs, days ?? _spanInDays(logs)),
               AppSpacing.gapXL,
-              Text('Riwayat Terbaru', style: AppTextStyles.headingM),
+              Text('Riwayat terbaru', style: AppTextStyles.headingM),
               AppSpacing.gapSM,
               _history(logs),
             ],
@@ -123,13 +125,18 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
 
   Widget _rangeChips() {
     return Wrap(
-      spacing: 8,
+      spacing: AppSpacing.xs,
+      runSpacing: AppSpacing.xs,
       children: _ranges.keys.map((label) {
         final isSelected = _range == label;
         return ChoiceChip(
           label: Text(label),
           selected: isSelected,
           onSelected: (_) => setState(() => _range = label),
+          labelStyle: AppTextStyles.bodyS.copyWith(
+            color: isSelected ? AppColors.onFilled : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+          ),
         );
       }).toList(),
     );
@@ -137,19 +144,48 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
 
   Widget _completionCard(List<BehaviourLog> logs) {
     final completed = logs.where((l) => l.completed).length;
-    final rate = (completed / logs.length * 100).round();
+    final fraction = completed / logs.length;
+    final rate = (fraction * 100).round();
 
     return Container(
       width: double.infinity,
-      padding: AppSpacing.cardPadding,
-      decoration: BoxDecoration(color: AppColors.teal100, borderRadius: BorderRadius.circular(16)),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: const BoxDecoration(
+        color: AppColors.teal100,
+        borderRadius: AppRadius.card,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Tingkat Penyelesaian Aktivitas', style: AppTextStyles.labelL),
+          Text('Tingkat penyelesaian aktivitas', style: AppTextStyles.labelL),
           AppSpacing.gapXS,
-          Text('$rate%', style: AppTextStyles.displayXL),
-          Text('$completed dari ${logs.length} aktivitas', style: AppTextStyles.bodyS),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('$rate', style: AppTextStyles.metric),
+              Text('%', style: AppTextStyles.headingL.copyWith(
+                color: AppColors.textSecondary,
+              )),
+            ],
+          ),
+          AppSpacing.gapXS,
+          // The bar carries the same number as the figure. Two readings of one
+          // fact, because a percentage alone is hard to feel.
+          ClipRRect(
+            borderRadius: const BorderRadius.all(AppRadius.xs),
+            child: LinearProgressIndicator(
+              value: fraction,
+              minHeight: 8,
+              backgroundColor: AppColors.white,
+              color: AppColors.teal700,
+            ),
+          ),
+          AppSpacing.gapXS,
+          Text(
+            '$completed dari ${logs.length} aktivitas dalam $_range terakhir',
+            style: AppTextStyles.bodyS,
+          ),
         ],
       ),
     );
@@ -164,27 +200,38 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
 
     return Column(
       children: entries.map((e) {
+        final fraction = e.value / logs.length;
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: Row(
             children: [
               SizedBox(
-                width: 100,
+                width: 108,
                 child: Text(_moodLabels[e.key] ?? e.key.name, style: AppTextStyles.bodyS),
               ),
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: const BorderRadius.all(AppRadius.xs),
                   child: LinearProgressIndicator(
-                    value: e.value / logs.length,
-                    minHeight: 12,
+                    value: fraction,
+                    minHeight: 10,
                     backgroundColor: AppColors.neutral200,
+                    // Mood is not a score, so all bars share one colour rather
+                    // than grading happy-green to sad-red. A parent reading a
+                    // red bar next to "Sedih" would read it as failure.
                     color: AppColors.teal500,
                   ),
                 ),
               ),
-              AppSpacing.gapHXS,
-              Text('${e.value}', style: AppTextStyles.bodyS),
+              AppSpacing.gapHSM,
+              SizedBox(
+                width: 36,
+                child: Text(
+                  '${e.value}×',
+                  style: AppTextStyles.bodyS.copyWith(color: AppColors.textSecondary),
+                  textAlign: TextAlign.right,
+                ),
+              ),
             ],
           ),
         );
@@ -211,31 +258,52 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
     final showLabels = span <= 7;
 
     return SizedBox(
-      height: 120,
+      height: 132,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: days.map((day) {
           final count = countsByDay[day] ?? 0;
-          final height = maxCount == 0 ? 4.0 : 8 + (count / maxCount) * 80;
+          final height = maxCount == 0 ? 4.0 : 8 + (count / maxCount) * 78;
+          final isToday = _isSameDay(day, today);
+
           return Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: showLabels ? 4 : 1),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (showLabels) Text('$count', style: AppTextStyles.caption),
-                  const SizedBox(height: 4),
-                  Container(
-                    height: height,
-                    decoration: BoxDecoration(
-                      color: AppColors.teal500,
-                      borderRadius: BorderRadius.circular(4),
+              child: Semantics(
+                label: '${DateFormat('EEEE d MMMM').format(day)}: $count aktivitas',
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (showLabels)
+                      Text(
+                        count == 0 ? '' : '$count',
+                        style: AppTextStyles.caption,
+                      ),
+                    AppSpacing.gapXXS,
+                    AnimatedContainer(
+                      duration: AppTheme.motion(context, AppTheme.motionFast),
+                      curve: AppTheme.motionCurve,
+                      height: height,
+                      decoration: BoxDecoration(
+                        // Today reads darker so the parent can place themselves
+                        // in the week without counting columns.
+                        color: count == 0
+                            ? AppColors.neutral200
+                            : (isToday ? AppColors.teal700 : AppColors.teal500),
+                        borderRadius: const BorderRadius.all(AppRadius.xs),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (showLabels)
-                    Text(DateFormat('E').format(day), style: AppTextStyles.caption),
-                ],
+                    AppSpacing.gapXXS,
+                    if (showLabels)
+                      Text(
+                        DateFormat('E').format(day),
+                        style: AppTextStyles.caption.copyWith(
+                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+                          color: isToday ? AppColors.textPrimary : AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           );
@@ -297,29 +365,60 @@ class BehaviourLogRow extends StatelessWidget {
       ),
       child: Row(
         children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: log.completed ? AppColors.successTint : AppColors.errorTint,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              log.completed ? Icons.check_rounded : Icons.close_rounded,
+              color: log.completed ? AppColors.success : AppColors.error,
+              size: 20,
+            ),
+          ),
+          AppSpacing.gapHSM,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(activityTitle, style: AppTextStyles.headingS),
+                AppSpacing.gapXXS,
+                // Plain Indonesian, not enum names: `meltdown` and `high` meant
+                // nothing to a parent reading their own child's report.
                 Text(
-                  DateFormat('d MMM y, HH:mm').format(log.timestamp),
-                  style: AppTextStyles.caption,
-                ),
-                Text(
-                  'Mood: ${log.mood.name} • Transisi: ${log.transitionDifficulty.name} • '
+                  '${DateFormat('d MMM, HH:mm').format(log.timestamp)} · '
+                  '${moodLabel(log.mood)} · '
+                  'transisi ${transitionLabel(log.transitionDifficulty)} · '
                   '${log.durationMinutes} menit',
-                  style: AppTextStyles.bodyS,
+                  style: AppTextStyles.caption,
                 ),
               ],
             ),
-          ),
-          Icon(
-            log.completed ? Icons.check_circle : Icons.cancel,
-            color: log.completed ? AppColors.success : AppColors.error,
           ),
         ],
       ),
     );
   }
 }
+
+const _moodPlain = {
+  Mood.happy: 'senang',
+  Mood.calm: 'tenang',
+  Mood.neutral: 'biasa',
+  Mood.anxious: 'cemas',
+  Mood.upset: 'sedih',
+  Mood.meltdown: 'kewalahan',
+};
+
+const _transitionPlain = {
+  TransitionDifficulty.low: 'mudah',
+  TransitionDifficulty.medium: 'sedang',
+  TransitionDifficulty.high: 'sulit',
+};
+
+String moodLabel(Mood mood) => _moodPlain[mood] ?? mood.name;
+
+String transitionLabel(TransitionDifficulty difficulty) =>
+    _transitionPlain[difficulty] ?? difficulty.name;

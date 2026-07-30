@@ -10,12 +10,15 @@ import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/services/voice_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../models/activity.dart';
 import '../../../models/behaviour_log.dart';
 import '../../../models/enums.dart';
 import '../../../models/schedule.dart';
+import '../../../shared/widgets/activity_image.dart';
 import 'board_editor.dart';
 
 const _moodOptions = {
@@ -76,7 +79,10 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
+            // Roomier than the form pages: this is the screen the child looks
+            // at, so it should use a tablet's width rather than sit in a
+            // narrow column.
+            constraints: const BoxConstraints(maxWidth: 900),
             child: scheduleAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Gagal memuat papan: $e')),
@@ -160,93 +166,138 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _speak(stepText));
     }
 
-    return Padding(
-      padding: AppSpacing.pagePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(builder: (context, constraints) {
+      final wide = isWideLayout(constraints.biggest);
+      final align = wide ? TextAlign.start : TextAlign.center;
+
+      final picture = _picture(activity, constraints.biggest, wide: wide);
+      final instructions = Column(
+        crossAxisAlignment: wide ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+        mainAxisAlignment: wide ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => _confirmQuit(context),
-                icon: const Icon(Icons.close, color: AppColors.neutral800),
-              ),
-              Expanded(
-                child: Text(
-                  'Aktivitas ${_activityIndex + 1} dari $total',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyM,
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
-          ),
-          AppSpacing.gapMD,
-          Text(activity.title, style: AppTextStyles.displayM),
-          AppSpacing.gapLG,
-          Center(
-            child: Container(
-              width: 200,
-              height: 200,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.neutral300,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Image.asset(activity.icon, fit: BoxFit.contain),
-            ),
-          ),
-          AppSpacing.gapXL,
-          if (hasSteps)
-            Text(
-              'Langkah ${_stepIndex + 1} dari ${steps.length}',
-              style: AppTextStyles.caption,
-            ),
+          Text(activity.title, style: AppTextStyles.headingM.copyWith(
+            color: AppColors.textSecondary,
+          )),
           AppSpacing.gapXS,
-          Text(stepText, style: AppTextStyles.headingL),
-          const Spacer(),
-          Row(
-            children: [
-              // Repeating the prompt is the most common thing a parent needs,
-              // so it gets its own button rather than hiding in a menu.
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _speak(stepText),
-                  icon: const Icon(Icons.volume_up),
-                  label: const Text('Ulangi'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
+          // The step is the sentence the child is being asked to act on, so it
+          // is the largest thing on screen — larger than the activity name.
+          Text(stepText, style: AppTextStyles.displayM, textAlign: align),
+          if (hasSteps) ...[
+            AppSpacing.gapMD,
+            _StepDots(
+              current: _stepIndex,
+              total: steps.length,
+              alignment: wide ? WrapAlignment.start : WrapAlignment.center,
+            ),
+          ],
+        ],
+      );
+
+      return Padding(
+        padding: AppSpacing.pagePadding,
+        // Header and actions sit outside the scroll area, so the buttons stay
+        // reachable and nothing can overflow when the tablet is rotated.
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // Quiet and cornered: the exit is for the parent, and it should
+                // not compete with the activity for the child's attention.
+                IconButton(
+                  onPressed: () => _confirmQuit(context),
+                  icon: Icon(Icons.close),
+                  color: AppColors.textSecondary,
+                  tooltip: 'Hentikan rutinitas',
+                ),
+                Expanded(
+                  child: _ActivityProgress(
+                    current: _activityIndex,
+                    total: total,
                   ),
                 ),
-              ),
-              AppSpacing.gapHMD,
-              Expanded(
-                flex: 2,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.peach500,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                  ),
-                  onPressed: isLastStep ? _markDone : _nextStep,
-                  child: Text(
-                    isLastStep ? 'Selesai' : 'Langkah berikutnya',
-                    style: AppTextStyles.headingM.copyWith(color: AppColors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (_stepIndex > 0)
-            Align(
-              alignment: Alignment.center,
-              child: TextButton(
-                onPressed: () => setState(() => _stepIndex--),
-                child: const Text('Kembali ke langkah sebelumnya'),
+                const SizedBox(width: AppTheme.minTarget),
+              ],
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: wide
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          picture,
+                          AppSpacing.gapHXL,
+                          Expanded(child: instructions),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          AppSpacing.gapMD,
+                          picture,
+                          AppSpacing.gapXL,
+                          instructions,
+                        ],
+                      ),
               ),
             ),
-          AppSpacing.gapMD,
-        ],
+            AppSpacing.gapMD,
+            Row(
+              children: [
+                // Repeating the prompt is the most common thing a parent needs,
+                // so it gets its own button rather than hiding in a menu.
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _speak(stepText),
+                    icon: Icon(Icons.volume_up_outlined),
+                    label: Text('Ulangi'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                    ),
+                  ),
+                ),
+                AppSpacing.gapHMD,
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                    ),
+                    onPressed: isLastStep ? _markDone : _nextStep,
+                    child: Text(isLastStep ? 'Selesai' : 'Langkah berikutnya'),
+                  ),
+                ),
+              ],
+            ),
+            // Reserve the row whether or not the back link is shown, so the
+            // primary button never shifts under the parent's thumb mid-routine.
+            SizedBox(
+              height: AppTheme.minTarget,
+              child: _stepIndex > 0
+                  ? Center(
+                      child: TextButton.icon(
+                        onPressed: () => setState(() => _stepIndex--),
+                        icon: Icon(Icons.arrow_back, size: 18),
+                        label: Text('Langkah sebelumnya'),
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _picture(Activity activity, Size available, {required bool wide}) {
+    final side = pictureSide(available, wide: wide);
+    return Container(
+      width: side,
+      height: side,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: const BoxDecoration(
+        color: AppColors.imagePlate,
+        borderRadius: AppRadius.tile,
       ),
+      child: ActivityImage(activity.icon),
     );
   }
 
@@ -322,11 +373,11 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hentikan rutinitas?'),
-        content: const Text('Aktivitas yang sudah ditandai selesai tetap tersimpan.'),
+        title: Text('Hentikan rutinitas?'),
+        content: Text('Aktivitas yang sudah ditandai selesai tetap tersimpan.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Lanjut')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hentikan')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Lanjut')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Hentikan')),
         ],
       ),
     );
@@ -335,6 +386,20 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
       context.pop();
     }
   }
+}
+
+/// Side-by-side picture and instructions once there is clearly more width than
+/// height — a tablet in landscape. A tablet in portrait is wide in pixels but
+/// still taller than it is wide, so it stays stacked.
+bool isWideLayout(Size available) =>
+    available.width >= 600 && available.width > available.height * 1.2;
+
+/// How big the activity picture should be. Grows with the space available so a
+/// tablet doesn't show a child a phone-sized image, but stays bounded so it
+/// never crowds out the instruction text.
+double pictureSide(Size available, {required bool wide}) {
+  final budget = wide ? available.width * 0.38 : available.width * 0.62;
+  return budget.clamp(140.0, 340.0);
 }
 
 /// Ids of the activities still to do, in the order the board runs them.
@@ -348,6 +413,86 @@ List<String> pendingRunOrder(Schedule schedule) {
     for (final activity in activities)
       if (!activity.completed) activity.id,
   ];
+}
+
+/// How far through the board, as a bar of segments rather than a sentence.
+///
+/// Predictability is the point of a visual schedule: seeing how much is left
+/// lowers anxiety about the transition. A child who cannot read "Aktivitas 2
+/// dari 4" can still read four segments with two filled.
+class _ActivityProgress extends StatelessWidget {
+  const _ActivityProgress({required this.current, required this.total});
+
+  final int current;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Aktivitas ${current + 1} dari $total',
+      child: Row(
+        children: [
+          for (var i = 0; i < total; i++) ...[
+            if (i > 0) const SizedBox(width: 4),
+            Expanded(
+              child: AnimatedContainer(
+                duration: AppTheme.motion(context, AppTheme.motionFast),
+                curve: AppTheme.motionCurve,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: i <= current ? AppColors.teal700 : AppColors.neutral200,
+                  borderRadius: const BorderRadius.all(AppRadius.xs),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Steps within the current activity. Same reasoning as [_ActivityProgress],
+/// one level down.
+class _StepDots extends StatelessWidget {
+  const _StepDots({
+    required this.current,
+    required this.total,
+    required this.alignment,
+  });
+
+  final int current;
+  final int total;
+  final WrapAlignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Langkah ${current + 1} dari $total',
+      child: Wrap(
+        alignment: alignment,
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        children: [
+          for (var i = 0; i < total; i++)
+            AnimatedContainer(
+              duration: AppTheme.motion(context, AppTheme.motionFast),
+              curve: AppTheme.motionCurve,
+              width: i == current ? 28 : 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: i < current
+                    ? AppColors.teal500
+                    : i == current
+                        ? AppColors.teal700
+                        : AppColors.neutral300,
+                borderRadius: const BorderRadius.all(AppRadius.pill),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Asked between the last step and the praise, so the praise can react to it.
@@ -364,44 +509,113 @@ class _MoodPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: AppSpacing.pagePadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(activityTitle, style: AppTextStyles.headingM),
-          AppSpacing.gapXS,
-          Text(
-            'Bagaimana perasaan anak?',
-            style: AppTextStyles.displayM,
-            textAlign: TextAlign.center,
-          ),
-          AppSpacing.gapXXL,
-          if (isSaving)
-            const CircularProgressIndicator()
-          else
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: _moodOptions.entries.map((entry) {
-                return GestureDetector(
+    return _CenteredScrollBody(
+      children: [
+        Text(activityTitle, style: AppTextStyles.headingM),
+        AppSpacing.gapXS,
+        Text(
+          'Bagaimana perasaan anak?',
+          style: AppTextStyles.displayM,
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.gapXXL,
+        if (isSaving)
+          const CircularProgressIndicator()
+        else
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.md,
+            children: [
+              for (final entry in _moodOptions.entries)
+                _MoodButton(
+                  emoji: entry.value.$1,
+                  label: entry.value.$2,
                   onTap: () => onMoodPicked(entry.key),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 36,
-                        backgroundColor: AppColors.neutral200,
-                        child: Text(entry.value.$1, style: const TextStyle(fontSize: 32)),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(entry.value.$2, style: AppTextStyles.bodyM),
-                    ],
-                  ),
-                );
-              }).toList(),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// A mood choice. Ink-splash feedback and a real tap target — this used to be a
+/// bare GestureDetector with no press state, so a parent could not tell whether
+/// the tap had registered.
+class _MoodButton extends StatelessWidget {
+  const _MoodButton({
+    required this.emoji,
+    required this.label,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: AppColors.transparent,
+        borderRadius: AppRadius.card,
+        child: InkWell(
+          borderRadius: AppRadius.card,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
             ),
-        ],
+            child: Column(
+              children: [
+                Container(
+                  width: 76,
+                  height: 76,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(emoji, style: const TextStyle(fontSize: 36)),
+                ),
+                AppSpacing.gapXS,
+                Text(label, style: AppTextStyles.headingS),
+              ],
+            ),
+          ),
+        ),
       ),
     );
+  }
+}
+
+/// Centres its children, but scrolls instead of overflowing when the screen is
+/// too short — which is what happens on a rotated tablet or a landscape phone.
+class _CenteredScrollBody extends StatelessWidget {
+  const _CenteredScrollBody({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Padding(
+            padding: AppSpacing.pagePadding,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: children,
+            ),
+          ),
+        ),
+      );
+    });
   }
 }
 
@@ -427,51 +641,63 @@ class _Celebration extends StatelessWidget {
     // Gentle praise shouldn't arrive with confetti.
     final isGentle = level == ReinforcementLevel.gentle;
 
-    return Padding(
-      padding: AppSpacing.pagePadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 160,
-            height: 160,
+    return _CenteredScrollBody(
+      children: [
+        // The medal scales in once. Reward needs to feel like an event, but a
+        // single settle — no bounce, nothing looping — keeps it calm enough for
+        // a child who is sensitive to movement.
+        TweenAnimationBuilder<double>(
+          key: ValueKey(phrase),
+          tween: Tween(begin: 0.82, end: 1),
+          duration: AppTheme.motion(context, AppTheme.motionBase),
+          curve: AppTheme.motionCurve,
+          builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+          child: Container(
+            width: 156,
+            height: 156,
             decoration: BoxDecoration(
-              color: isGentle ? AppColors.neutral200 : AppColors.teal100,
+              color: isGentle ? AppColors.olive100 : AppColors.teal100,
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(isGentle ? '💛' : '🎉', style: const TextStyle(fontSize: 72)),
+              child: Text(isGentle ? '💛' : '🎉', style: const TextStyle(fontSize: 68)),
             ),
           ),
-          AppSpacing.gapLG,
-          Text(badgeFor(level), style: AppTextStyles.displayL, textAlign: TextAlign.center),
-          AppSpacing.gapXS,
-          Text(activityTitle, style: AppTextStyles.bodyM),
-          AppSpacing.gapLG,
-          Text(phrase, style: AppTextStyles.headingM, textAlign: TextAlign.center),
-          AppSpacing.gapMD,
-          TextButton.icon(
-            onPressed: onReplay,
-            icon: const Icon(Icons.volume_up),
-            label: const Text('Dengarkan lagi'),
+        ),
+        AppSpacing.gapLG,
+        Text(badgeFor(level), style: AppTextStyles.displayL, textAlign: TextAlign.center),
+        AppSpacing.gapXXS,
+        Text(activityTitle, style: AppTextStyles.caption),
+        AppSpacing.gapLG,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Text(
+            phrase,
+            style: AppTextStyles.headingL,
+            textAlign: TextAlign.center,
           ),
-          AppSpacing.gapXL,
-          SizedBox(
+        ),
+        AppSpacing.gapXS,
+        TextButton.icon(
+          onPressed: onReplay,
+          icon: Icon(Icons.volume_up_outlined, size: 18),
+          label: Text('Dengarkan lagi'),
+        ),
+        AppSpacing.gapXL,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: SizedBox(
             width: double.infinity,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.peach500,
                 padding: const EdgeInsets.symmetric(vertical: 18),
               ),
               onPressed: onNext,
-              child: Text(
-                isLast ? 'Selesaikan rutinitas' : 'Aktivitas berikutnya',
-                style: AppTextStyles.headingM.copyWith(color: AppColors.white),
-              ),
+              child: Text(isLast ? 'Selesaikan rutinitas' : 'Aktivitas berikutnya'),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -484,25 +710,32 @@ class _AllDone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: AppSpacing.pagePadding,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('✅', style: TextStyle(fontSize: 72)),
-          AppSpacing.gapLG,
-          Text(message, style: AppTextStyles.headingL, textAlign: TextAlign.center),
-          AppSpacing.gapXL,
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.peach500,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            ),
-            onPressed: onClose,
-            child: Text('Tutup', style: AppTextStyles.headingM.copyWith(color: AppColors.white)),
+    return _CenteredScrollBody(
+      children: [
+        Container(
+          width: 96,
+          height: 96,
+          decoration: const BoxDecoration(
+            color: AppColors.successTint,
+            shape: BoxShape.circle,
           ),
-        ],
-      ),
+          child: Icon(Icons.check_rounded, color: AppColors.success, size: 48),
+        ),
+        AppSpacing.gapLG,
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: Text(
+            message,
+            style: AppTextStyles.headingL,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        AppSpacing.gapXL,
+        FilledButton(
+          onPressed: onClose,
+          child: Text('Tutup'),
+        ),
+      ],
     );
   }
 }

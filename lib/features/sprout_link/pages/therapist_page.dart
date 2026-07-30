@@ -89,7 +89,7 @@ class _ParentView extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Text('Gagal memuat profil anak: $e'),
             data: (child) {
-              if (child == null) return const Text('Profil anak belum tersedia.');
+              if (child == null) return Text('Profil anak belum tersedia.');
               return child.therapistId == null
                   ? _LinkTherapistForm(childId: child.id)
                   : _LinkedTherapistPanel(child: child);
@@ -210,7 +210,7 @@ class _LinkedTherapistPanel extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () => ref.read(childServiceProvider).unlinkTherapist(child.id),
-                  child: const Text('Putuskan'),
+                  child: Text('Putuskan'),
                 ),
               ],
             ),
@@ -300,7 +300,7 @@ class _ChildNotesPanel extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Catatan Baru'),
+        title: Text('Catatan Baru'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -319,8 +319,8 @@ class _ChildNotesPanel extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Simpan')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Simpan')),
         ],
       ),
     );
@@ -362,7 +362,7 @@ class _ChildNotesPanel extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => _addNote(context, ref),
-              child: const Text('+ Tambah Catatan'),
+              child: Text('+ Tambah Catatan'),
             ),
           ],
         ),
@@ -392,7 +392,7 @@ class _NoteCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral800.withOpacity(0.1)),
+        border: Border.all(color: AppColors.neutral800.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

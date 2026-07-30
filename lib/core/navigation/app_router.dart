@@ -70,15 +70,15 @@ final GoRouter appRouter = GoRouter(
     // Routes for authentication
     GoRoute(
       path: AppRoutes.landing,
-      builder: (_, __) => const LandingPage(),
+      builder: (_, _) => const LandingPage(),
     ),
     GoRoute(
       path: AppRoutes.login,
-      builder: (_, __) => const LoginPage(),
+      builder: (_, _) => const LoginPage(),
     ),
     GoRoute(
       path: AppRoutes.register,
-      builder: (_, __) => const RegisterPage(),
+      builder: (_, _) => const RegisterPage(),
     ),
     
     // Shell route
@@ -90,15 +90,15 @@ final GoRouter appRouter = GoRouter(
       routes: [
         GoRoute(
           path: AppRoutes.home,
-          builder: (_, __) => const Home(),
+          builder: (_, _) => const Home(),
         ),
         GoRoute(
           path: AppRoutes.board,
-          builder: (_, __) => const BoardPage(),
+          builder: (_, _) => const BoardPage(),
         ),
         GoRoute(
           path: AppRoutes.buddy,
-          builder: (_, __) => const BuddyPage(),
+          builder: (_, _) => const BuddyPage(),
         ),
       ],
     ),
@@ -106,23 +106,23 @@ final GoRouter appRouter = GoRouter(
     // Routes for create board
     GoRoute(
       path: AppRoutes.createBoard,
-      builder: (_, __) => const CreateBoardPage(),
+      builder: (_, _) => const CreateBoardPage(),
     ),
     GoRoute(
       path: AppRoutes.createBoardActivity,
-      builder: (_, __) => const CreateActivityBoardPage(),
+      builder: (_, _) => const CreateActivityBoardPage(),
     ),
     GoRoute(
       path: AppRoutes.createScheduleBoard,
-      builder: (_, __) => const CreateScheduleBoardPage(),
+      builder: (_, _) => const CreateScheduleBoardPage(),
     ),
     GoRoute(
       path: AppRoutes.createActivity,
-      builder: (_, __) => const CreateActivityPage(),
+      builder: (_, _) => const CreateActivityPage(),
     ),
     GoRoute(
       path: AppRoutes.createFirstThenBoard,
-      builder: (_, __) => const CreateFirstThenBoardPage(),
+      builder: (_, _) => const CreateFirstThenBoardPage(),
     ),
     GoRoute(
       path: AppRoutes.createWaitingBoard,
@@ -136,11 +136,11 @@ final GoRouter appRouter = GoRouter(
     // Routes for other pages
     GoRoute(
       path: AppRoutes.profile,
-      builder: (_, __) => const ProfilePage(),
+      builder: (_, _) => const ProfilePage(),
     ),
     GoRoute(
       path: AppRoutes.settings,
-      builder: (_, __) => const SettingsPage(),
+      builder: (_, _) => const SettingsPage(),
     ),
     GoRoute(
       path: AppRoutes.boardDetail,
@@ -159,15 +159,15 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.analytics,
-      builder: (_, __) => const AnalyticsPage(),
+      builder: (_, _) => const AnalyticsPage(),
     ),
     GoRoute(
       path: AppRoutes.report,
-      builder: (_, __) => const ReportPage(),
+      builder: (_, _) => const ReportPage(),
     ),
     GoRoute(
       path: AppRoutes.therapist,
-      builder: (_, __) => const TherapistPage(),
+      builder: (_, _) => const TherapistPage(),
     ),
   ],
 );
