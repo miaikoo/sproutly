@@ -10,6 +10,9 @@ class AppRoutes {
 
   // Others
   static const profile = '/profile';
+  static const childProfile = '/profile/:childId';
+
+  static String childProfilePath(String childId) => '/profile/$childId';
   static const settings = '/settings';
 
   static const boardDetail = '/board/detail/:id';

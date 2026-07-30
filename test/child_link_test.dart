@@ -150,6 +150,33 @@ void main() {
     });
   });
 
+  group('addChild / watchChildrenForParent', () {
+    test('adds siblings under the same parent and lists them oldest first', () async {
+      await childService.addChild(
+        parentId: 'parent-1',
+        name: 'Adik',
+        birthDate: DateTime(2022, 1, 1),
+        severity: Severity.mild,
+      );
+      await childService.addChild(
+        parentId: 'parent-1',
+        name: 'Kakak',
+        birthDate: DateTime(2018, 1, 1),
+        severity: Severity.moderate,
+      );
+      await childService.addChild(
+        parentId: 'parent-2',
+        name: 'Anak Lain',
+        birthDate: DateTime(2020, 1, 1),
+        severity: Severity.mild,
+      );
+
+      final children = await childService.watchChildrenForParent('parent-1').first;
+
+      expect(children.map((c) => c.name), ['Kakak', 'Adik']);
+    });
+  });
+
   test('linkTherapistByEmail finds the therapist and sets therapistId', () async {
     await firestore.collection('children').doc('child-1').set(
           Child(

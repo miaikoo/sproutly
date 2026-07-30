@@ -10,6 +10,7 @@ import '../../features/auth/pages/register_page.dart';
 
 import '../../features/home/pages/home_page.dart';
 import '../../features/profile/pages/profile_page.dart';
+import '../../features/profile/pages/child_profile_page.dart';
 import '../../features/settings/pages/settings_page.dart';
 
 import '../../features/sprout_plan/pages/board_page.dart';
@@ -137,6 +138,11 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.profile,
       builder: (_, _) => const ProfilePage(),
+    ),
+    GoRoute(
+      path: AppRoutes.childProfile,
+      builder: (_, state) =>
+          ChildProfilePage(childId: state.pathParameters['childId']!),
     ),
     GoRoute(
       path: AppRoutes.settings,

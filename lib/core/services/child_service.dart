@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/child.dart';
 import '../../models/enums.dart';
 import '../data/activity_catalog.dart';
+import 'active_child.dart';
 import 'auth_providers.dart';
 
 class ChildService {
@@ -13,10 +14,34 @@ class ChildService {
 
   CollectionReference<Map<String, dynamic>> get _children => _firestore.collection('children');
 
-  Stream<Child?> watchChildForParent(String parentId) {
-    return _children.where('parentId', isEqualTo: parentId).limit(1).snapshots().map(
-          (snapshot) => snapshot.docs.isEmpty ? null : Child.fromJson(snapshot.docs.first.data()),
+  /// Every child belonging to [parentId], oldest first so the list order is
+  /// stable as profiles are added.
+  Stream<List<Child>> watchChildrenForParent(String parentId) {
+    return _children.where('parentId', isEqualTo: parentId).snapshots().map(
+          (snapshot) => snapshot.docs.map((d) => Child.fromJson(d.data())).toList()
+            ..sort((a, b) => a.birthDate.compareTo(b.birthDate)),
         );
+  }
+
+  String newChildId() => _children.doc().id;
+
+  /// Adds a sibling profile under the same parent.
+  Future<Child> addChild({
+    required String parentId,
+    required String name,
+    required DateTime birthDate,
+    required Severity severity,
+  }) async {
+    final child = Child(
+      id: newChildId(),
+      parentId: parentId,
+      name: name,
+      birthDate: birthDate,
+      severity: severity,
+      photoUrl: '',
+    );
+    await _children.doc(child.id).set(child.toJson());
+    return child;
   }
 
   Stream<Child?> watchChildById(String childId) {
@@ -92,11 +117,32 @@ final childServiceProvider = Provider<ChildService>((ref) {
   return ChildService(ref.watch(firestoreProvider));
 });
 
-/// The current parent's single child profile (MVP: one child per parent).
+/// Every child profile under the signed-in parent.
+final childrenForParentProvider = StreamProvider<List<Child>>((ref) {
+  final user = ref.watch(authStateChangesProvider).valueOrNull;
+  if (user == null) return const Stream.empty();
+  return ref.watch(childServiceProvider).watchChildrenForParent(user.uid);
+});
+
+/// The child every other screen works with.
+///
+/// A family can have more than one child in the programme, so this resolves the
+/// parent's saved choice against the profiles that actually exist — falling back
+/// to the first one when nothing is selected or the selection was deleted. Every
+/// screen downstream already takes a `childId`, so switching profiles just works.
 final currentChildProvider = StreamProvider<Child?>((ref) {
   final user = ref.watch(authStateChangesProvider).valueOrNull;
   if (user == null) return const Stream.empty();
-  return ref.watch(childServiceProvider).watchChildForParent(user.uid);
+
+  final activeId = ref.watch(activeChildIdProvider);
+
+  return ref.watch(childServiceProvider).watchChildrenForParent(user.uid).map((children) {
+    if (children.isEmpty) return null;
+    return children.firstWhere(
+      (c) => c.id == activeId,
+      orElse: () => children.first,
+    );
+  });
 });
 
 final childByIdProvider = StreamProvider.family<Child?, String>((ref, childId) {
