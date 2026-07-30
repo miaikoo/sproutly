@@ -1,12 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/data/activity_catalog.dart';
+import '../../../core/navigation/app_routes.dart';
+import '../../../core/services/child_service.dart';
+import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
-import '../../../shared/widgets/add_activity_bottom_sheet.dart';
+import 'board_editor.dart';
 
-class CreateEmotionBoardPage extends StatelessWidget {
+class CreateEmotionBoardPage extends ConsumerStatefulWidget {
   const CreateEmotionBoardPage({super.key});
+
+  @override
+  ConsumerState<CreateEmotionBoardPage> createState() => _CreateEmotionBoardPageState();
+}
+
+class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage> {
+  String _title = 'Papan Emosi';
+  String? _emotionId;
+  String? _copingAId;
+  String? _copingBId;
+  String? _thenAId;
+  String? _thenBId;
+  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +46,9 @@ class CreateEmotionBoardPage extends StatelessWidget {
                           padding: const EdgeInsets.all(24),
                           child: Column(
                             children: [
-                              _buildTitleInput('Kesal', AppColors.peach100),
+                              _buildTitleInput(),
                               const SizedBox(height: 32),
-                              
+
                               const Text(
                                 'Ketika aku merasa',
                                 style: TextStyle(
@@ -40,10 +59,20 @@ class CreateEmotionBoardPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              
-                              _buildAddBox(context, borderColor: AppColors.peach500),
+
+                              _buildAddBox(
+                                borderColor: AppColors.peach500,
+                                activityId: _emotionId,
+                                // Locked to emotion cards: this slot names the
+                                // feeling the board is about.
+                                onTap: () => _pick(
+                                  (id) => _emotionId = id,
+                                  only: ActivityCategory.emotion,
+                                  title: 'Pilih Emosi',
+                                ),
+                              ),
                               const SizedBox(height: 24),
-                              
+
                               Column(
                                 children: [
                                   const Text(
@@ -59,7 +88,11 @@ class CreateEmotionBoardPage extends StatelessWidget {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      _buildAddBox(context, borderColor: AppColors.peach500),
+                                      _buildAddBox(
+                                        borderColor: AppColors.peach500,
+                                        activityId: _copingAId,
+                                        onTap: () => _pick((id) => _copingAId = id),
+                                      ),
                                       const Padding(
                                         padding: EdgeInsets.symmetric(horizontal: 16),
                                         child: Text(
@@ -72,7 +105,11 @@ class CreateEmotionBoardPage extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      _buildAddBox(context, borderColor: AppColors.peach500),
+                                      _buildAddBox(
+                                        borderColor: AppColors.peach500,
+                                        activityId: _copingBId,
+                                        onTap: () => _pick((id) => _copingBId = id),
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -84,7 +121,7 @@ class CreateEmotionBoardPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                _buildBottomSection(context),
+                _buildBottomSection(),
               ],
             ),
           ),
@@ -107,63 +144,88 @@ class CreateEmotionBoardPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
-            'Kesal',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: GestureDetector(
+              onTap: _editTitle,
+              child: Text(
+                _title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 28,
+                  fontFamily: 'Nunito',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
-          const Spacer(),
-          const CustomIcon(
-            assetName: 'assets/icons/solar_settings-bold.svg',
-            size: 28,
-            color: AppColors.peach500,
+          GestureDetector(
+            onTap: _editTitle,
+            child: const CustomIcon(
+              assetName: 'assets/icons/solar_pen-linear.svg',
+              size: 28,
+              color: AppColors.peach500,
+            ),
           ),
           const SizedBox(width: 16),
-          const CustomIcon(
-            assetName: 'assets/icons/lucide_save.svg',
-            size: 28,
-            color: AppColors.peach500,
+          GestureDetector(
+            onTap: _isSaving ? null : _save,
+            child: _isSaving
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const CustomIcon(
+                    assetName: 'assets/icons/lucide_save.svg',
+                    size: 28,
+                    color: AppColors.peach500,
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTitleInput(String title, Color bgColor) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 22,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
+  Widget _buildTitleInput() {
+    return GestureDetector(
+      onTap: _editTitle,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: AppColors.peach100,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 22,
+                  fontFamily: 'Nunito',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
-          ),
-          const CustomIcon(
-            assetName: 'assets/icons/solar_pen-linear.svg',
-            size: 24,
-            color: AppColors.neutral800,
-          ),
-        ],
+            const CustomIcon(
+              assetName: 'assets/icons/solar_pen-linear.svg',
+              size: 24,
+              color: AppColors.neutral800,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBottomSection(BuildContext context) {
+  Widget _buildBottomSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(32),
@@ -190,7 +252,11 @@ class CreateEmotionBoardPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildAddBox(context, borderColor: AppColors.white),
+              _buildAddBox(
+                borderColor: AppColors.white,
+                activityId: _thenAId,
+                onTap: () => _pick((id) => _thenAId = id),
+              ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
@@ -203,7 +269,11 @@ class CreateEmotionBoardPage extends StatelessWidget {
                   ),
                 ),
               ),
-              _buildAddBox(context, borderColor: AppColors.white),
+              _buildAddBox(
+                borderColor: AppColors.white,
+                activityId: _thenBId,
+                onTap: () => _pick((id) => _thenBId = id),
+              ),
             ],
           ),
         ],
@@ -211,48 +281,101 @@ class CreateEmotionBoardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAddBox(BuildContext context, {required Color borderColor}) {
+  Widget _buildAddBox({
+    required Color borderColor,
+    required String? activityId,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () => _showAddActivityModal(context),
+      onTap: onTap,
       child: Container(
         width: 120,
         height: 120,
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: AppColors.white.withOpacity(0.3),
-          border: Border.all(color: borderColor, width: 2), 
+          color: AppColors.white.withValues(alpha: 0.3),
+          border: Border.all(color: borderColor, width: 2),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Center(
-          child: Icon(
-            Icons.add, 
-            size: 40,
-            color: borderColor,
-          ),
-        ),
+        child: activityId == null
+            ? Center(child: Icon(Icons.add, size: 40, color: borderColor))
+            : _slotPreview(activityId),
       ),
     );
   }
 
-  void _showAddActivityModal(BuildContext context) async {
-    final result = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Align( // <-- Hapus const di sini kalau sebelumnya ada
-        alignment: Alignment.bottomCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800), // <-- Tambahin const di sini
-          child: const SafeArea( // <-- Tambahin const di sini
-            bottom: false,
-            child: AddActivityBottomSheet(),
+  Widget _slotPreview(String activityId) {
+    final item = ActivityCatalog.byId(activityId);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(child: Image.asset(item.image, fit: BoxFit.contain)),
+        Text(
+          item.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 12,
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w700,
           ),
         ),
-      ),
+      ],
     );
+  }
 
-    if (result != null) {
-      print('Aktivitas: $result');
+  Future<void> _editTitle() async {
+    final result = await promptForTitle(context, current: _title);
+    if (result != null) setState(() => _title = result);
+  }
+
+  Future<void> _pick(
+    void Function(String id) assign, {
+    ActivityCategory? only,
+    String? title,
+  }) async {
+    final result = await showActivityPicker(context, only: only, title: title);
+    if (result != null) setState(() => assign(result));
+  }
+
+  Future<void> _save() async {
+    if (_emotionId == null) {
+      showBoardSnack(context, 'Pilih dulu emosi yang ingin didampingi.');
+      return;
+    }
+    final coping = [_copingAId, _copingBId].whereType<String>().toList();
+    if (coping.isEmpty) {
+      showBoardSnack(context, 'Pilih minimal satu aktivitas untuk menenangkan diri.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final child = await ref.read(currentChildProvider.future);
+      if (child == null) throw StateError('Profil anak belum tersedia.');
+
+      // Card order carries the board's meaning: the emotion first, then the
+      // coping options, then the reward activities.
+      final ordered = [_emotionId!, ...coping, ...[_thenAId, _thenBId].whereType<String>()];
+      final now = DateTime.now();
+
+      await ref.read(scheduleServiceProvider).createBoard(
+            childId: child.id,
+            title: _title,
+            type: BoardType.emotion,
+            customActivities: child.customActivities,
+            picks: [
+              for (var i = 0; i < ordered.length; i++)
+                (catalogId: ordered[i], start: now.add(Duration(minutes: i))),
+            ],
+          );
+
+      if (mounted) context.go(AppRoutes.board);
+    } catch (e) {
+      if (mounted) showBoardSnack(context, 'Gagal menyimpan: $e');
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 }

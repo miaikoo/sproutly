@@ -1,5 +1,6 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sprout_ly_app/core/data/activity_catalog.dart';
 import 'package:sprout_ly_app/core/services/schedule_service.dart';
 import 'package:sprout_ly_app/models/activity.dart';
 import 'package:sprout_ly_app/models/enums.dart';
@@ -64,5 +65,111 @@ void main() {
 
     expect(first.completed, isTrue);
     expect(second.completed, isFalse);
+  });
+
+  group('createBoard', () {
+    test('resolves catalog ids into activities and round-trips through Firestore', () async {
+      final start = DateTime(2026, 1, 1, 7);
+      await service.createBoard(
+        childId: 'child-1',
+        title: 'Rutinitas Pagi',
+        type: BoardType.schedule,
+        picks: [
+          (catalogId: 'sikat_gigi', start: start),
+          (catalogId: 'makan', start: start.add(const Duration(minutes: 30))),
+        ],
+      );
+
+      final saved = (await service.watchSchedulesForChild('child-1').first).single;
+      expect(saved.type, BoardType.schedule);
+      expect(saved.activities.map((a) => a.title), ['Sikat Gigi', 'Makan']);
+      expect(saved.activities.first.icon, 'assets/images/Sikat Gigi.png');
+      expect(saved.activities.first.category, ActivityCategory.selfCare);
+      expect(saved.activities.last.startTime, start.add(const Duration(minutes: 30)));
+      expect(saved.waitMinutes, isNull);
+    });
+
+    test('keeps waitMinutes on a waiting board', () async {
+      await service.createBoard(
+        childId: 'child-1',
+        title: 'Menunggu',
+        type: BoardType.waiting,
+        waitMinutes: 10,
+        picks: [(catalogId: 'menunggu', start: DateTime(2026, 1, 1, 7))],
+      );
+
+      final saved = (await service.watchSchedulesForChild('child-1').first).single;
+      expect(saved.type, BoardType.waiting);
+      expect(saved.waitMinutes, 10);
+    });
+
+    test('preserves card order for emotion boards', () async {
+      final now = DateTime(2026, 1, 1, 7);
+      await service.createBoard(
+        childId: 'child-1',
+        title: 'Papan Emosi',
+        type: BoardType.emotion,
+        picks: [
+          (catalogId: 'kesal', start: now),
+          (catalogId: 'tenang', start: now.add(const Duration(minutes: 1))),
+          (catalogId: 'bermain', start: now.add(const Duration(minutes: 2))),
+        ],
+      );
+
+      final saved = (await service.watchSchedulesForChild('child-1').first).single;
+      expect(saved.type, BoardType.emotion);
+      expect(saved.activities.map((a) => a.title), ['Kesal', 'Tenang', 'Bermain']);
+    });
+
+    test('resolves a parent-made activity id from customActivities', () async {
+      const custom = ActivityCatalogItem(
+        id: 'custom-1',
+        title: 'Merapikan mainan',
+        image: 'assets/images/Bermain.png',
+        category: ActivityCategory.other,
+      );
+
+      await service.createBoard(
+        childId: 'child-1',
+        title: 'Sore',
+        type: BoardType.schedule,
+        customActivities: const [custom],
+        picks: [(catalogId: 'custom-1', start: DateTime(2026, 1, 1, 16))],
+      );
+
+      final saved = (await service.watchSchedulesForChild('child-1').first).single;
+      expect(saved.activities.single.title, 'Merapikan mainan');
+      expect(saved.activities.single.category, ActivityCategory.other);
+    });
+
+    test('unknown catalog ids fall back to the first item instead of throwing', () async {
+      await service.createBoard(
+        childId: 'child-1',
+        title: 'Papan',
+        type: BoardType.schedule,
+        picks: [(catalogId: 'tidak-ada', start: DateTime(2026, 1, 1, 7))],
+      );
+
+      final saved = (await service.watchSchedulesForChild('child-1').first).single;
+      expect(saved.activities, hasLength(1));
+    });
+  });
+
+  test('a document written without a type reads back as a schedule board', () async {
+    // Boards saved before BoardType existed must keep working.
+    final legacy = buildSchedule('legacy').toJson()..remove('type');
+    await firestore.collection('schedules').doc('legacy').set(legacy);
+
+    final saved = await service.watchScheduleById('legacy').first;
+    expect(saved!.type, BoardType.schedule);
+  });
+
+  test('deleteSchedule removes the board', () async {
+    final id = service.newScheduleId();
+    await service.saveSchedule(buildSchedule(id));
+
+    await service.deleteSchedule(id);
+
+    expect(await service.watchSchedulesForChild('child-1').first, isEmpty);
   });
 }

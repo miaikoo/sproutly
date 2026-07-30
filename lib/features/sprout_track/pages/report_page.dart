@@ -9,9 +9,36 @@ import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../models/activity.dart';
 import '../../../models/behaviour_log.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../widgets/child_progress_panel.dart';
+
+/// One reporting period with the logs that fall in it.
+typedef ReportPeriod = ({String label, List<BehaviourLog> logs});
+
+/// Groups newest-first [logs] into calendar weeks, newest week first — the
+/// "laporan berkala" of RF-12, rather than one flat list of every entry.
+List<ReportPeriod> groupIntoWeeks(List<BehaviourLog> logs) {
+  final byWeekStart = <DateTime, List<BehaviourLog>>{};
+
+  for (final log in logs) {
+    final day = DateTime(log.timestamp.year, log.timestamp.month, log.timestamp.day);
+    // Monday of that log's week.
+    final weekStart = day.subtract(Duration(days: day.weekday - 1));
+    byWeekStart.putIfAbsent(weekStart, () => []).add(log);
+  }
+
+  final starts = byWeekStart.keys.toList()..sort((a, b) => b.compareTo(a));
+  final format = DateFormat('d MMM');
+
+  return [
+    for (final start in starts)
+      (
+        label: '${format.format(start)} – ${format.format(start.add(const Duration(days: 6)))}',
+        logs: byWeekStart[start]!,
+      ),
+  ];
+}
 
 class ReportPage extends ConsumerWidget {
   const ReportPage({super.key});
@@ -42,7 +69,9 @@ class ReportPage extends ConsumerWidget {
                         ),
                       ),
                       AppSpacing.gapHMD,
-                      Text('Laporan Perkembangan', style: AppTextStyles.displayL),
+                      Expanded(
+                        child: Text('Laporan Perkembangan', style: AppTextStyles.displayL),
+                      ),
                     ],
                   ),
                 ),
@@ -83,63 +112,41 @@ class ReportPage extends ConsumerWidget {
       );
     }
 
-    final activitiesById = <String, Activity>{
+    final titlesById = {
       for (final schedule in schedulesAsync.value ?? [])
-        for (final activity in schedule.activities) activity.id: activity,
+        for (final activity in schedule.activities) activity.id: activity.title,
     };
 
-    return ListView.separated(
+    final weeks = groupIntoWeeks(logs);
+
+    return ListView.builder(
       padding: AppSpacing.pagePadding,
-      itemCount: logs.length,
-      separatorBuilder: (_, __) => AppSpacing.gapSM,
+      itemCount: weeks.length,
       itemBuilder: (context, index) {
-        final log = logs[index];
-        final activity = activitiesById[log.activityId];
-        return _ReportRow(log: log, activityTitle: activity?.title ?? 'Aktivitas');
-      },
-    );
-  }
-}
+        final week = weeks[index];
+        final completed = week.logs.where((l) => l.completed).length;
 
-class _ReportRow extends StatelessWidget {
-  const _ReportRow({required this.log, required this.activityTitle});
-
-  final BehaviourLog log;
-  final String activityTitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: AppSpacing.cardPadding,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.neutral800.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(activityTitle, style: AppTextStyles.headingS),
-                Text(
-                  DateFormat('d MMM y, HH:mm').format(log.timestamp),
-                  style: AppTextStyles.caption,
-                ),
-                Text(
-                  'Mood: ${log.mood.name} • Transisi: ${log.transitionDifficulty.name} • ${log.durationMinutes} menit',
-                  style: AppTextStyles.bodyS,
-                ),
-              ],
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (index > 0) AppSpacing.gapXL,
+            Text(week.label, style: AppTextStyles.headingM),
+            Text(
+              '$completed dari ${week.logs.length} aktivitas selesai',
+              style: AppTextStyles.caption,
             ),
-          ),
-          Icon(
-            log.completed ? Icons.check_circle : Icons.cancel,
-            color: log.completed ? AppColors.success : AppColors.error,
-          ),
-        ],
-      ),
+            AppSpacing.gapSM,
+            for (final log in week.logs)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: BehaviourLogRow(
+                  log: log,
+                  activityTitle: titlesById[log.activityId] ?? 'Aktivitas',
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

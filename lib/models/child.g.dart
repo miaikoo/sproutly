@@ -14,6 +14,21 @@ Child _$ChildFromJson(Map<String, dynamic> json) => Child(
   severity: $enumDecode(_$SeverityEnumMap, json['severity']),
   photoUrl: json['photoUrl'] as String,
   therapistId: json['therapistId'] as String?,
+  customActivities:
+      (json['customActivities'] as List<dynamic>?)
+          ?.map((e) => ActivityCatalogItem.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
+  preferences:
+      (json['preferences'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
+  interventionTargets:
+      (json['interventionTargets'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$ChildToJson(Child instance) => <String, dynamic>{
@@ -24,6 +39,9 @@ Map<String, dynamic> _$ChildToJson(Child instance) => <String, dynamic>{
   'severity': _$SeverityEnumMap[instance.severity]!,
   'photoUrl': instance.photoUrl,
   'therapistId': instance.therapistId,
+  'customActivities': instance.customActivities.map((e) => e.toJson()).toList(),
+  'preferences': instance.preferences,
+  'interventionTargets': instance.interventionTargets,
 };
 
 const _$SeverityEnumMap = {

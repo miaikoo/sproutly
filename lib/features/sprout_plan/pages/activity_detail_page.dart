@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'dart:async';
-import 'dart:math';
 
+import '../../../core/data/reinforcement_policy.dart';
 import '../../../core/services/behaviour_log_service.dart';
 import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
@@ -29,13 +29,6 @@ const _transitionOptions = {
   TransitionDifficulty.medium: 'Sedang',
   TransitionDifficulty.high: 'Sulit',
 };
-
-const _reinforcementPhrases = [
-  'Kerja bagus! Kamu hebat!',
-  'Wah, keren sekali!',
-  'Mantap, kamu berhasil!',
-  'Bagus sekali, teruskan!',
-];
 
 class ActivityDetailPage extends ConsumerStatefulWidget {
   const ActivityDetailPage({super.key, required this.scheduleId, required this.activityId});
@@ -223,6 +216,10 @@ class _ActivityDetailPageState extends ConsumerState<ActivityDetailPage> {
       final child = await ref.read(currentChildProvider.future);
       if (child == null) throw StateError('Profil anak belum tersedia.');
 
+      // Read history before writing this log, so today's entry doesn't skew the
+      // level chosen for it.
+      final recentLogs = await ref.read(logsForChildProvider(child.id).future);
+
       final logService = ref.read(behaviourLogServiceProvider);
       final log = BehaviourLog(
         id: logService.newLogId(),
@@ -244,8 +241,8 @@ class _ActivityDetailPageState extends ConsumerState<ActivityDetailPage> {
             completed: true,
           );
 
-      final phrase = _reinforcementPhrases[Random().nextInt(_reinforcementPhrases.length)];
-      unawaited(ref.read(voiceServiceProvider).speak(phrase));
+      final level = levelFor(recentLogs: recentLogs, currentMood: _mood);
+      unawaited(ref.read(voiceServiceProvider).speak(phraseFor(level)));
 
       if (mounted) context.pop();
     } catch (e) {

@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/activity.dart';
+import '../../models/enums.dart';
 import '../../models/schedule.dart';
+import '../data/activity_catalog.dart';
 import 'auth_providers.dart';
 
 class ScheduleService {
@@ -30,6 +32,53 @@ class ScheduleService {
     return _schedules.doc(schedule.id).set(schedule.toJson());
   }
 
+  Future<void> deleteSchedule(String id) => _schedules.doc(id).delete();
+
+  /// Builds and persists a board of any [type] from catalog picks. Shared by
+  /// every create-board page so activity construction lives in one place.
+  ///
+  /// [picks] carries a start time per card. Only schedule boards show times;
+  /// the other board types pass the board date for every card.
+  ///
+  /// [customActivities] are the child's own cards, needed so a `custom-*` id
+  /// resolves to the parent's activity instead of falling back to a preset.
+  Future<Schedule> createBoard({
+    required String childId,
+    required String title,
+    required BoardType type,
+    required List<({String catalogId, DateTime start})> picks,
+    List<ActivityCatalogItem> customActivities = const [],
+    int? waitMinutes,
+  }) async {
+    final id = newScheduleId();
+    final schedule = Schedule(
+      id: id,
+      childId: childId,
+      title: title,
+      date: DateTime.now(),
+      type: type,
+      waitMinutes: waitMinutes,
+      activities: [
+        for (var i = 0; i < picks.length; i++)
+          () {
+            final item = ActivityCatalog.byId(picks[i].catalogId, customActivities);
+            return Activity(
+              id: '$id-$i',
+              title: item.title,
+              icon: item.image,
+              category: item.category,
+              startTime: picks[i].start,
+              endTime: picks[i].start.add(const Duration(minutes: 15)),
+              steps: item.steps,
+            );
+          }(),
+      ],
+    );
+
+    await saveSchedule(schedule);
+    return schedule;
+  }
+
   /// Marks a single activity within [scheduleId] complete or not, rewriting the
   /// embedded activities array (Firestore has no partial-array-element update).
   Future<void> setActivityCompleted({
@@ -43,18 +92,7 @@ class ScheduleService {
     final schedule = Schedule.fromJson(doc.data()!);
     final updatedActivities = [
       for (final activity in schedule.activities)
-        if (activity.id == activityId)
-          Activity(
-            id: activity.id,
-            title: activity.title,
-            icon: activity.icon,
-            category: activity.category,
-            startTime: activity.startTime,
-            endTime: activity.endTime,
-            completed: completed,
-          )
-        else
-          activity,
+        if (activity.id == activityId) activity.copyWith(completed: completed) else activity,
     ];
 
     await _schedules.doc(scheduleId).update({

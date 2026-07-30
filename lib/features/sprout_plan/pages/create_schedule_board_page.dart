@@ -7,10 +7,9 @@ import '../../../core/navigation/app_routes.dart';
 import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../models/activity.dart';
-import '../../../models/schedule.dart';
-import '../../../shared/widgets/add_activity_bottom_sheet.dart';
+import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import 'board_editor.dart';
 
 class _ScheduleSlot {
   String? activityId;
@@ -304,38 +303,12 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
   }
 
   Future<void> _editTitle() async {
-    final controller = TextEditingController(text: _titleCtrl.text);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Nama Papan'),
-        content: TextField(controller: controller, autofocus: true),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
-    if (result != null && result.trim().isNotEmpty) {
-      setState(() => _titleCtrl.text = result.trim());
-    }
+    final result = await promptForTitle(context, current: _titleCtrl.text);
+    if (result != null) setState(() => _titleCtrl.text = result);
   }
 
   Future<void> _pickActivity(int index) async {
-    final result = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: const AddActivityBottomSheet(),
-        ),
-      ),
-    );
+    final result = await showActivityPicker(context);
     if (result != null) {
       setState(() => _slots[index].activityId = result);
     }
@@ -351,9 +324,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
   Future<void> _save() async {
     final filledSlots = _slots.where((s) => s.activityId != null).toList();
     if (filledSlots.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tambahkan minimal satu aktivitas sebelum menyimpan.')),
-      );
+      showBoardSnack(context, 'Tambahkan minimal satu aktivitas sebelum menyimpan.');
       return;
     }
 
@@ -364,48 +335,24 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
         throw StateError('Profil anak belum tersedia.');
       }
 
-      final scheduleService = ref.read(scheduleServiceProvider);
-      final scheduleId = scheduleService.newScheduleId();
       final now = DateTime.now();
-      final baseDate = DateTime(now.year, now.month, now.day);
+      await ref.read(scheduleServiceProvider).createBoard(
+            childId: child.id,
+            title: _titleCtrl.text.trim().isEmpty ? 'Papan Baru' : _titleCtrl.text.trim(),
+            type: BoardType.schedule,
+            customActivities: child.customActivities,
+            picks: [
+              for (final slot in filledSlots)
+                (
+                  catalogId: slot.activityId!,
+                  start: DateTime(now.year, now.month, now.day, slot.time.hour, slot.time.minute),
+                ),
+            ],
+          );
 
-      final activities = <Activity>[
-        for (var i = 0; i < filledSlots.length; i++)
-          () {
-            final slot = filledSlots[i];
-            final catalogItem = ActivityCatalog.byId(slot.activityId!);
-            final start = DateTime(
-              baseDate.year,
-              baseDate.month,
-              baseDate.day,
-              slot.time.hour,
-              slot.time.minute,
-            );
-            return Activity(
-              id: '$scheduleId-$i',
-              title: catalogItem.title,
-              icon: catalogItem.image,
-              category: catalogItem.category,
-              startTime: start,
-              endTime: start.add(const Duration(minutes: 15)),
-            );
-          }(),
-      ];
-
-      final schedule = Schedule(
-        id: scheduleId,
-        childId: child.id,
-        title: _titleCtrl.text.trim().isEmpty ? 'Papan Baru' : _titleCtrl.text.trim(),
-        date: baseDate,
-        activities: activities,
-      );
-
-      await scheduleService.saveSchedule(schedule);
       if (mounted) context.go(AppRoutes.board);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
-      }
+      if (mounted) showBoardSnack(context, 'Gagal menyimpan: $e');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

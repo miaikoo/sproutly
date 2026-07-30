@@ -13,9 +13,11 @@ class AppRoutes {
   static const settings = '/settings';
 
   static const boardDetail = '/board/detail/:id';
+  static const runBoard = '/board/run/:id';
   static const activity = '/activity/:scheduleId/:activityId';
 
   static String boardDetailPath(String id) => '/board/detail/$id';
+  static String runBoardPath(String id) => '/board/run/$id';
   static String activityPath(String scheduleId, String activityId) =>
       '/activity/$scheduleId/$activityId';
 

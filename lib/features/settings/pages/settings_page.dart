@@ -1,12 +1,15 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/services/auth_providers.dart';
+import '../../../core/services/child_service.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/widgets/custom_icon.dart'; 
+import '../../../shared/widgets/custom_icon.dart';
 import '../../../core/navigation/app_routes.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   static const _backgroundColor = AppColors.background;
@@ -14,7 +17,7 @@ class SettingsPage extends StatelessWidget {
   static const _primaryActionColor = AppColors.peach500;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: _backgroundColor,
       body: SafeArea(
@@ -28,7 +31,7 @@ class SettingsPage extends StatelessWidget {
                 children: [
                   _buildTitle(context),
                   const SizedBox(height: 24),
-                  _buildProfileCard(context),
+                  _buildProfileCard(context, ref),
                   const SizedBox(height: 32),
                   
                   _buildSection(
@@ -86,7 +89,7 @@ class SettingsPage extends StatelessWidget {
                   _buildAboutSection(),
                   const SizedBox(height: 48),
                   
-                  _buildLogoutCard(),
+                  _buildLogoutCard(context, ref),
                   const SizedBox(height: 48),
                 ],
               ),
@@ -128,7 +131,8 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileCard(BuildContext context) {
+  Widget _buildProfileCard(BuildContext context, WidgetRef ref) {
+    final childName = ref.watch(currentChildProvider).valueOrNull?.name ?? '...';
     return GestureDetector(
       onTap: () {
         context.push(AppRoutes.profile); 
@@ -159,10 +163,10 @@ class SettingsPage extends StatelessWidget {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
-                    'John Doe',
-                    style: TextStyle(
+                    childName,
+                    style: const TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 24,
                       fontFamily: 'Nunito',
@@ -170,9 +174,9 @@ class SettingsPage extends StatelessWidget {
                       letterSpacing: -0.45,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Ganti profil aktif',
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Lihat dan ubah profil anak',
                     style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 16,
@@ -348,8 +352,29 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLogoutCard() {
-    return Container(
+  /// Confirms before signing out — the device is often in the child's hands,
+  /// so a stray tap on this card shouldn't end the session.
+  Future<void> _logout(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Keluar dari akun?'),
+        content: const Text('Anda perlu masuk kembali untuk mengakses data anak.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Keluar')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    // The router's redirect listens to authStateChanges and returns to landing.
+    await ref.read(authServiceProvider).logout();
+  }
+
+  Widget _buildLogoutCard(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () => _logout(context, ref),
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -382,6 +407,7 @@ class SettingsPage extends StatelessWidget {
             color: AppColors.white,
           ),
         ],
+      ),
       ),
     );
   }

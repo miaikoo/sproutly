@@ -16,6 +16,11 @@ class Activity {
 
   final bool completed;
 
+  /// Copied from the catalog when the board is built, so editing a catalog card
+  /// later never rewrites the instructions a child is already used to.
+  @JsonKey(defaultValue: <String>[])
+  final List<String> steps;
+
   const Activity({
     required this.id,
     required this.title,
@@ -24,7 +29,19 @@ class Activity {
     required this.startTime,
     required this.endTime,
     this.completed = false,
+    this.steps = const [],
   });
+
+  Activity copyWith({bool? completed}) => Activity(
+        id: id,
+        title: title,
+        icon: icon,
+        category: category,
+        startTime: startTime,
+        endTime: endTime,
+        completed: completed ?? this.completed,
+        steps: steps,
+      );
 
   factory Activity.fromJson(Map<String, dynamic> json) =>
       _$ActivityFromJson(json);

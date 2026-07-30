@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/data/activity_catalog.dart';
+import '../../../core/navigation/app_routes.dart';
+import '../../../core/services/child_service.dart';
+import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
-import '../../../shared/widgets/add_activity_bottom_sheet.dart'; 
+import 'board_editor.dart';
 
-class CreateFirstThenBoardPage extends StatelessWidget {
+class CreateFirstThenBoardPage extends ConsumerStatefulWidget {
   const CreateFirstThenBoardPage({super.key});
+
+  @override
+  ConsumerState<CreateFirstThenBoardPage> createState() => _CreateFirstThenBoardPageState();
+}
+
+class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardPage> {
+  String _title = 'Papan Pertama-Kemudian';
+  String? _firstId;
+  String? _thenId;
+  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +40,11 @@ class CreateFirstThenBoardPage extends StatelessWidget {
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        _buildStepCard(context, 'pertama aku perlu...'),
+                        _buildStepCard(
+                          'pertama aku perlu...',
+                          _firstId,
+                          () => _pick((id) => _firstId = id),
+                        ),
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 16),
                           child: CustomIcon(
@@ -33,7 +53,11 @@ class CreateFirstThenBoardPage extends StatelessWidget {
                             color: Color(0xFFC4806C),
                           ),
                         ),
-                        _buildStepCard(context, 'kemudian aku bisa...'),
+                        _buildStepCard(
+                          'kemudian aku bisa...',
+                          _thenId,
+                          () => _pick((id) => _thenId = id),
+                        ),
                       ],
                     ),
                   ),
@@ -60,33 +84,51 @@ class CreateFirstThenBoardPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
-            'Mandi',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
+          Expanded(
+            child: GestureDetector(
+              onTap: _editTitle,
+              child: Text(
+                _title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 28,
+                  fontFamily: 'Nunito',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
-          const Spacer(),
-          const CustomIcon(
-            assetName: 'assets/icons/solar_settings-bold.svg',
-            size: 28,
-            color: AppColors.neutral800,
+          GestureDetector(
+            onTap: _editTitle,
+            child: const CustomIcon(
+              assetName: 'assets/icons/solar_pen-linear.svg',
+              size: 28,
+              color: AppColors.neutral800,
+            ),
           ),
           const SizedBox(width: 16),
-          const CustomIcon(
-            assetName: 'assets/icons/lucide_save.svg',
-            size: 28,
-            color: AppColors.neutral800,
+          GestureDetector(
+            onTap: _isSaving ? null : _save,
+            child: _isSaving
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const CustomIcon(
+                    assetName: 'assets/icons/lucide_save.svg',
+                    size: 28,
+                    color: AppColors.neutral800,
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStepCard(BuildContext context, String title) {
+  Widget _buildStepCard(String label, String? activityId, VoidCallback onTap) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -97,7 +139,7 @@ class CreateFirstThenBoardPage extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            title,
+            label,
             style: const TextStyle(
               color: AppColors.textPrimary,
               fontSize: 24,
@@ -107,22 +149,24 @@ class CreateFirstThenBoardPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           GestureDetector(
-            onTap: () => _showAddActivityModal(context), 
+            onTap: onTap,
             child: Container(
               width: double.infinity,
               height: 160,
               decoration: BoxDecoration(
-                color: AppColors.white.withOpacity(0.5), 
+                color: AppColors.white.withValues(alpha: 0.5),
                 border: Border.all(color: const Color(0xFF7B9DB8), width: 2),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Center(
-                child: CustomIcon(
-                  assetName: 'assets/icons/solar_clipboard-add-outline.svg',
-                  size: 36,
-                  color: Color(0xFF7B9DB8),
-                ),
-              ),
+              child: activityId == null
+                  ? const Center(
+                      child: CustomIcon(
+                        assetName: 'assets/icons/solar_clipboard-add-outline.svg',
+                        size: 36,
+                        color: Color(0xFF7B9DB8),
+                      ),
+                    )
+                  : _slotPreview(activityId),
             ),
           ),
         ],
@@ -130,21 +174,67 @@ class CreateFirstThenBoardPage extends StatelessWidget {
     );
   }
 
-  void _showAddActivityModal(BuildContext context) async {
-    final result = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: const AddActivityBottomSheet(),
-        ),
+  Widget _slotPreview(String activityId) {
+    final item = ActivityCatalog.byId(activityId);
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Expanded(child: Image.asset(item.image, fit: BoxFit.contain)),
+          const SizedBox(height: 4),
+          Text(
+            item.title,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 16,
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
+  }
 
-    if (result != null) {
-      print('Aktivitas yang dipilih dari First-Then: $result');
+  Future<void> _editTitle() async {
+    final result = await promptForTitle(context, current: _title);
+    if (result != null) setState(() => _title = result);
+  }
+
+  Future<void> _pick(void Function(String id) assign) async {
+    final result = await showActivityPicker(context);
+    if (result != null) setState(() => assign(result));
+  }
+
+  Future<void> _save() async {
+    if (_firstId == null || _thenId == null) {
+      showBoardSnack(context, 'Pilih aktivitas untuk kedua langkah sebelum menyimpan.');
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final child = await ref.read(currentChildProvider.future);
+      if (child == null) throw StateError('Profil anak belum tersedia.');
+
+      final now = DateTime.now();
+      await ref.read(scheduleServiceProvider).createBoard(
+            childId: child.id,
+            title: _title,
+            type: BoardType.firstThen,
+            customActivities: child.customActivities,
+            picks: [
+              (catalogId: _firstId!, start: now),
+              (catalogId: _thenId!, start: now.add(const Duration(minutes: 15))),
+            ],
+          );
+
+      if (mounted) context.go(AppRoutes.board);
+    } catch (e) {
+      if (mounted) showBoardSnack(context, 'Gagal menyimpan: $e');
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 }

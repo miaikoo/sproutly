@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/child.dart';
+import '../../models/enums.dart';
+import '../data/activity_catalog.dart';
 import 'auth_providers.dart';
 
 class ChildService {
@@ -49,6 +51,38 @@ class ChildService {
 
   Future<void> unlinkTherapist(String childId) async {
     await _children.doc(childId).update({'therapistId': null});
+  }
+
+  /// Updates the editable parts of the child profile (RF-02). Only the fields
+  /// passed are written, so a partial edit can't blank out the rest.
+  Future<void> updateProfile(
+    String childId, {
+    String? name,
+    DateTime? birthDate,
+    Severity? severity,
+    List<String>? preferences,
+    List<String>? interventionTargets,
+  }) async {
+    await _children.doc(childId).update({
+      if (name != null) 'name': name,
+      if (birthDate != null) 'birthDate': birthDate.toIso8601String(),
+      if (severity != null) 'severity': severity.name,
+      if (preferences != null) 'preferences': preferences,
+      if (interventionTargets != null) 'interventionTargets': interventionTargets,
+    });
+  }
+
+  /// Appends a parent-made activity to the child's card library.
+  Future<void> addCustomActivity(String childId, ActivityCatalogItem item) async {
+    await _children.doc(childId).update({
+      'customActivities': FieldValue.arrayUnion([item.toJson()]),
+    });
+  }
+
+  Future<void> removeCustomActivity(String childId, ActivityCatalogItem item) async {
+    await _children.doc(childId).update({
+      'customActivities': FieldValue.arrayRemove([item.toJson()]),
+    });
   }
 }
 

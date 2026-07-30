@@ -1,26 +1,32 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dotted_border/dotted_border.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/data/activity_catalog.dart';
+import '../../../core/services/child_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_spacing.dart';
+import '../../../models/child.dart';
+import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
 
-class ProfilePage extends StatefulWidget {
+const _severityLabels = {
+  Severity.mild: 'Ringan',
+  Severity.moderate: 'Sedang',
+  Severity.severe: 'Berat',
+};
+
+/// The child profile: characteristics, preferences and intervention targets
+/// (RF-02). One child per parent, so there is no profile switcher.
+class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final childAsync = ref.watch(currentChildProvider);
 
-class _ProfilePageState extends State<ProfilePage> {
-  // Mock state 
-  String _activeProfile = 'John Doe';
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -34,32 +40,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   _buildAppBar(context),
                   const SizedBox(height: 32),
-                  
-                  // Card Profile 1
-                  _buildProfileCard(
-                    name: 'John Doe',
-                    isActive: _activeProfile == 'John Doe',
-                    onTap: () {
-                      setState(() {
-                        _activeProfile = 'John Doe';
-                      });
-                    },
+                  childAsync.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Text('Gagal memuat profil anak: $e', style: _body),
+                    data: (child) => child == null
+                        ? Text('Profil anak belum tersedia.', style: _body)
+                        : _ProfileBody(child: child),
                   ),
-                  const SizedBox(height: 24),
-                  
-                  // Card Profile 2
-                  _buildProfileCard(
-                    name: 'Jane Doe',
-                    isActive: _activeProfile == 'Jane Doe',
-                    onTap: () {
-                      setState(() {
-                        _activeProfile = 'Jane Doe';
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 48),
-                  
-                  _buildAddProfileCard(),
                   const SizedBox(height: 48),
                 ],
               ),
@@ -74,68 +61,118 @@ class _ProfilePageState extends State<ProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => context.pop(), // Back button function
-                child: const CustomIcon(
-                  assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-                  size: 28,
-                  color: AppColors.neutral800,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Text(
-                'Profil',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 28,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
-                  height: 1.17,
-                  letterSpacing: -0.72,
-                ),
-              ),
-            ],
+          GestureDetector(
+            onTap: () => context.pop(),
+            child: const CustomIcon(
+              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
+              size: 28,
+              color: AppColors.neutral800,
+            ),
           ),
-          const CustomIcon(
-            assetName: 'assets/icons/solar_clipboard-add-outline.svg',
-            size: 28,
-            color: AppColors.peach500,
+          const SizedBox(width: 16),
+          const Text(
+            'Profil Anak',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 28,
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.w700,
+              height: 1.17,
+              letterSpacing: -0.72,
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildProfileCard({
-    required String name,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
+const _body = TextStyle(
+  color: AppColors.textPrimary,
+  fontSize: 16,
+  fontFamily: 'Nunito',
+  fontWeight: FontWeight.w400,
+);
+
+const _sectionLabel = TextStyle(
+  color: AppColors.textPrimary,
+  fontSize: 16,
+  fontFamily: 'Nunito',
+  fontWeight: FontWeight.w700,
+  letterSpacing: 0.56,
+);
+
+class _ProfileBody extends ConsumerWidget {
+  const _ProfileBody({required this.child});
+
+  final Child child;
+
+  ChildService _service(WidgetRef ref) => ref.read(childServiceProvider);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _headerCard(context, ref),
+        const SizedBox(height: 32),
+
+        const Text('KARAKTERISTIK', style: _sectionLabel),
+        const SizedBox(height: 12),
+        _row(
+          label: 'Tanggal lahir',
+          value: DateFormat('d MMMM y').format(child.birthDate),
+          onTap: () => _editBirthDate(context, ref),
+        ),
+        _row(
+          label: 'Tingkat perkembangan',
+          value: _severityLabels[child.severity] ?? child.severity.name,
+          onTap: () => _editSeverity(context, ref),
+        ),
+        const SizedBox(height: 32),
+
+        _EditableTags(
+          label: 'PREFERENSI',
+          hint: 'Hal yang disukai anak, misalnya musik atau stiker.',
+          values: child.preferences,
+          onChanged: (values) => _service(ref).updateProfile(child.id, preferences: values),
+        ),
+        const SizedBox(height: 32),
+
+        _EditableTags(
+          label: 'TARGET INTERVENSI',
+          hint: 'Kemampuan yang sedang dilatih, misalnya makan mandiri.',
+          values: child.interventionTargets,
+          onChanged: (values) =>
+              _service(ref).updateProfile(child.id, interventionTargets: values),
+        ),
+        const SizedBox(height: 32),
+
+        _customActivitiesSection(context, ref),
+      ],
+    );
+  }
+
+  Widget _headerCard(BuildContext context, WidgetRef ref) {
     return GestureDetector(
-      onTap: onTap, 
+      onTap: () => _editName(context, ref),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColors.teal100,
-          borderRadius: BorderRadius.all(AppRadius.lg),
-          border: Border.all(color: AppColors.neutral800.withOpacity(0.2), width: 1),
+          borderRadius: const BorderRadius.all(AppRadius.lg),
+          border: Border.all(color: AppColors.neutral800.withValues(alpha: 0.2)),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Avatar
             CircleAvatar(
               radius: 36,
               backgroundColor: AppColors.neutral300,
               child: ClipOval(
                 child: SvgPicture.asset(
-                  'assets/images/profile_pic.svg', 
+                  'assets/images/profile_pic.svg',
                   width: 72,
                   height: 72,
                   fit: BoxFit.cover,
@@ -143,14 +180,14 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(width: 20),
-            
-            // Text Detail
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name,
+                    child.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 24,
@@ -159,36 +196,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       letterSpacing: -0.45,
                     ),
                   ),
-                  if (isActive) ...[
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Profil aktif',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ]
+                  const SizedBox(height: 4),
+                  Text('${child.ageInYears(DateTime.now())} tahun', style: _body),
                 ],
               ),
             ),
-            
-            // Indicator Radio/Checkmark
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isActive ? AppColors.peach500 : Colors.transparent,
-                border: isActive 
-                    ? null 
-                    : Border.all(color: AppColors.peach500, width: 2),
-              ),
-              child: isActive 
-                  ? const Icon(Icons.check, color: AppColors.white, size: 20) 
-                  : null,
+            const CustomIcon(
+              assetName: 'assets/icons/solar_pen-linear.svg',
+              size: 24,
+              color: AppColors.neutral800,
             ),
           ],
         ),
@@ -196,39 +212,215 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildAddProfileCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFBF3EF),
-        borderRadius: BorderRadius.all(AppRadius.lg),
-        border: Border.all(color: AppColors.peach500, width: 2)
+  Widget _row({required String label, required String value, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 18,
+                  fontFamily: 'Nunito',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Text(value, style: _body),
+            const SizedBox(width: 8),
+            const CustomIcon(
+              assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
+              size: 24,
+              color: AppColors.neutral800,
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.peach500, width: 2),
-            ),
-            child: const Icon(Icons.add, color: AppColors.peach500, size: 20),
+    );
+  }
+
+  Widget _customActivitiesSection(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('AKTIVITAS BUATAN SENDIRI', style: _sectionLabel),
+        const SizedBox(height: 12),
+        if (child.customActivities.isEmpty)
+          Text(
+            'Belum ada. Buat lewat "Buat Baru" saat menambahkan aktivitas ke papan.',
+            style: _body,
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: child.customActivities
+                .map((item) => Chip(
+                      avatar: Image.asset(item.image, fit: BoxFit.contain),
+                      label: Text(item.title),
+                      onDeleted: () => _confirmRemove(context, ref, item),
+                    ))
+                .toList(),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            'Tambah Profil Baru',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w700,
-            ),
+      ],
+    );
+  }
+
+  Future<void> _confirmRemove(
+    BuildContext context,
+    WidgetRef ref,
+    ActivityCatalogItem item,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Hapus ${item.title}?'),
+        content: const Text(
+          'Aktivitas ini tidak lagi bisa dipilih. Papan yang sudah memakainya tetap utuh.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Hapus')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _service(ref).removeCustomActivity(child.id, item);
+    }
+  }
+
+  Future<void> _editName(BuildContext context, WidgetRef ref) async {
+    final controller = TextEditingController(text: child.name);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Nama Anak'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Simpan'),
           ),
         ],
       ),
+    );
+    final trimmed = result?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) {
+      await _service(ref).updateProfile(child.id, name: trimmed);
+    }
+  }
+
+  Future<void> _editBirthDate(BuildContext context, WidgetRef ref) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: child.birthDate,
+      firstDate: DateTime(now.year - 18),
+      lastDate: now,
+    );
+    if (picked != null) {
+      await _service(ref).updateProfile(child.id, birthDate: picked);
+    }
+  }
+
+  Future<void> _editSeverity(BuildContext context, WidgetRef ref) async {
+    final picked = await showDialog<Severity>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Tingkat Perkembangan'),
+        children: _severityLabels.entries
+            .map((entry) => SimpleDialogOption(
+                  onPressed: () => Navigator.pop(context, entry.key),
+                  child: Text(
+                    entry.value,
+                    style: TextStyle(
+                      fontWeight:
+                          entry.key == child.severity ? FontWeight.w800 : FontWeight.w400,
+                    ),
+                  ),
+                ))
+            .toList(),
+      ),
+    );
+    if (picked != null) {
+      await _service(ref).updateProfile(child.id, severity: picked);
+    }
+  }
+}
+
+/// A labelled list of short free-text entries the parent can add to or remove.
+class _EditableTags extends StatelessWidget {
+  const _EditableTags({
+    required this.label,
+    required this.hint,
+    required this.values,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String hint;
+  final List<String> values;
+  final ValueChanged<List<String>> onChanged;
+
+  Future<void> _add(BuildContext context) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(label),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(hintText: hint),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Tambah'),
+          ),
+        ],
+      ),
+    );
+
+    final trimmed = result?.trim();
+    // Duplicates would just clutter the AI prompt.
+    if (trimmed == null || trimmed.isEmpty || values.contains(trimmed)) return;
+    onChanged([...values, trimmed]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: _sectionLabel),
+            TextButton(onPressed: () => _add(context), child: const Text('+ Tambah')),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (values.isEmpty)
+          Text(hint, style: _body)
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: values
+                .map((value) => Chip(
+                      label: Text(value),
+                      onDeleted: () => onChanged(values.where((v) => v != value).toList()),
+                    ))
+                .toList(),
+          ),
+      ],
     );
   }
 }

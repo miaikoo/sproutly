@@ -23,6 +23,7 @@ import '../../features/sprout_plan/pages/create_emotion_board_page.dart';
 
 import '../../features/sprout_plan/pages/board_detail_page.dart';
 import '../../features/sprout_plan/pages/activity_detail_page.dart';
+import '../../features/sprout_plan/pages/run_board_page.dart';
 
 import '../../features/sprout_buddy/pages/buddy_page.dart';
 import '../../features/sprout_track/pages/analytics_page.dart';
@@ -144,6 +145,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.boardDetail,
       builder: (_, state) => BoardDetailPage(scheduleId: state.pathParameters['id']!),
+    ),
+    GoRoute(
+      path: AppRoutes.runBoard,
+      builder: (_, state) => RunBoardPage(scheduleId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: AppRoutes.activity,

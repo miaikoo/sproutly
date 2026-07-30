@@ -2,32 +2,53 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    /// True when the caller is the child's parent or its linked therapist.
+    /// ponytail: one extra document read per rule evaluation. Denormalise the
+    /// parent/therapist ids onto each schedule/log/note if read cost bites.
+    function canAccessChild(childId) {
+      let child = get(/databases/$(database)/documents/children/$(childId)).data;
+      return child.parentId == request.auth.uid
+          || child.get('therapistId', null) == request.auth.uid;
+    }
+
     match /users/{uid} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == uid;
-      allow update: if request.auth != null && request.auth.uid == uid;
+      // Readable by any signed-in user on purpose: linking a therapist looks
+      // them up by email, and each side needs the other's display name. These
+      // documents hold only id/email/name/role — no child data.
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid;
     }
 
     match /children/{childId} {
-      allow read: if request.auth != null &&
-        (resource.data.parentId == request.auth.uid || resource.data.therapistId == request.auth.uid);
-      allow create: if request.auth != null && request.resource.data.parentId == request.auth.uid;
-      allow update: if request.auth != null &&
-        (resource.data.parentId == request.auth.uid || resource.data.therapistId == request.auth.uid);
+      allow read: if signedIn() &&
+        (resource.data.parentId == request.auth.uid ||
+         resource.data.get('therapistId', null) == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.parentId == request.auth.uid;
+      allow update: if signedIn() &&
+        (resource.data.parentId == request.auth.uid ||
+         resource.data.get('therapistId', null) == request.auth.uid);
     }
 
-    // ponytail: schedules/logs/notes only check "is a signed-in app user", not
-    // per-document ownership against /children (would need a get() lookup).
-    // Tighten to real ownership checks once child<->schedule access matters
-    // for more than one family in the same project.
     match /schedules/{id} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if signedIn() && canAccessChild(resource.data.childId);
+      allow create: if signedIn() && canAccessChild(request.resource.data.childId);
+      allow update: if signedIn() && canAccessChild(resource.data.childId);
     }
+
     match /behaviour_logs/{id} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if signedIn() && canAccessChild(resource.data.childId);
+      allow create: if signedIn() && canAccessChild(request.resource.data.childId);
+      allow update: if signedIn() && canAccessChild(resource.data.childId);
     }
+
     match /therapist_notes/{id} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if signedIn() && canAccessChild(resource.data.childId);
+      allow create: if signedIn() && canAccessChild(request.resource.data.childId);
+      allow update: if signedIn() && canAccessChild(resource.data.childId);
     }
   }
 }

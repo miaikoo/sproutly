@@ -8,8 +8,10 @@ import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../models/enums.dart';
 import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import 'board_editor.dart';
 
 class BoardPage extends ConsumerStatefulWidget {
   const BoardPage({super.key});
@@ -17,6 +19,15 @@ class BoardPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<BoardPage> createState() => _BoardPageState();
 }
+
+/// Filter chip label → the board type it shows. 'Semua' shows everything.
+const _boardFilters = <String, BoardType?>{
+  'Semua': null,
+  'Jadwal': BoardType.schedule,
+  'Pertama-Kemudian': BoardType.firstThen,
+  'Menunggu': BoardType.waiting,
+  'Emosi': BoardType.emotion,
+};
 
 class _BoardPageState extends ConsumerState<BoardPage> {
   String _selectedFilter = 'Semua';
@@ -67,15 +78,21 @@ class _BoardPageState extends ConsumerState<BoardPage> {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Text('Gagal memuat papan: $e', style: AppTextStyles.bodyM),
       data: (schedules) {
-        // Only "Jadwal" boards are backed by real data today; other filters
-        // stay empty until Waiting/Emotion/First-Then boards also persist.
-        final visible = _selectedFilter == 'Semua' || _selectedFilter == 'Aktivitas' ? schedules : <Schedule>[];
+        final wanted = _boardFilters[_selectedFilter];
+        final visible =
+            wanted == null ? schedules : schedules.where((s) => s.type == wanted).toList();
 
         if (visible.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 32),
             child: Center(
-              child: Text('Belum ada papan. Tekan + untuk membuat papan baru.', style: AppTextStyles.bodyM),
+              child: Text(
+                schedules.isEmpty
+                    ? 'Belum ada papan. Tekan + untuk membuat papan baru.'
+                    : 'Belum ada papan $_selectedFilter.',
+                style: AppTextStyles.bodyM,
+                textAlign: TextAlign.center,
+              ),
             ),
           );
         }
@@ -105,11 +122,10 @@ class _BoardPageState extends ConsumerState<BoardPage> {
   }
 
   Widget _buildFilterChips() {
-    final filters = ['Semua', 'Aktivitas', 'Menunggu', 'Emosi'];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: filters.map((label) {
+        children: _boardFilters.keys.map((label) {
           final isSelected = _selectedFilter == label;
           return Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -174,7 +190,7 @@ class _BoardCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFFBCA0B0),
+                color: boardColor(schedule.type),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: thumbnail != null

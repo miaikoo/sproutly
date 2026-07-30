@@ -14,6 +14,8 @@ Activity _$ActivityFromJson(Map<String, dynamic> json) => Activity(
   startTime: DateTime.parse(json['startTime'] as String),
   endTime: DateTime.parse(json['endTime'] as String),
   completed: json['completed'] as bool? ?? false,
+  steps:
+      (json['steps'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
 );
 
 Map<String, dynamic> _$ActivityToJson(Activity instance) => <String, dynamic>{
@@ -24,6 +26,7 @@ Map<String, dynamic> _$ActivityToJson(Activity instance) => <String, dynamic>{
   'startTime': instance.startTime.toIso8601String(),
   'endTime': instance.endTime.toIso8601String(),
   'completed': instance.completed,
+  'steps': instance.steps,
 };
 
 const _$ActivityCategoryEnumMap = {
@@ -35,5 +38,7 @@ const _$ActivityCategoryEnumMap = {
   ActivityCategory.play: 'play',
   ActivityCategory.exercise: 'exercise',
   ActivityCategory.bedtime: 'bedtime',
+  ActivityCategory.emotion: 'emotion',
+  ActivityCategory.waiting: 'waiting',
   ActivityCategory.other: 'other',
 };

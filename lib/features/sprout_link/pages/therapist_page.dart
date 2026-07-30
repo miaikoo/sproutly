@@ -13,6 +13,7 @@ import '../../../models/child.dart';
 import '../../../models/enums.dart';
 import '../../../models/therapist_note.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../sprout_track/widgets/child_progress_panel.dart';
 
 class TherapistPage extends ConsumerWidget {
   const TherapistPage({super.key});
@@ -347,10 +348,18 @@ class _ChildNotesPanel extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // The therapist needs the same activity history and progress the parent
+        // sees before writing a note (doc §6.5 step 3).
+        Text('Perkembangan ${child.name}', style: AppTextStyles.headingM),
+        AppSpacing.gapSM,
+        ChildProgressPanel(childId: child.id, historyLimit: 10),
+        AppSpacing.gapXXL,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Catatan untuk ${child.name}', style: AppTextStyles.headingM),
+            Expanded(
+              child: Text('Catatan untuk ${child.name}', style: AppTextStyles.headingM),
+            ),
             TextButton(
               onPressed: () => _addNote(context, ref),
               child: const Text('+ Tambah Catatan'),

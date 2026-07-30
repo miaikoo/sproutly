@@ -1,43 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/data/activity_catalog.dart';
+import '../../core/services/child_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/navigation/app_routes.dart';
 import '../../models/enums.dart';
 import 'custom_icon.dart';
 
-class AddActivityBottomSheet extends StatefulWidget {
-  const AddActivityBottomSheet({super.key});
+class AddActivityBottomSheet extends ConsumerStatefulWidget {
+  const AddActivityBottomSheet({super.key, this.only, this.title});
+
+  /// Restricts the picker to a single category and hides the category chips.
+  /// Emotion boards use this so the "ketika aku merasa ..." slot can only hold
+  /// an emotion card.
+  final ActivityCategory? only;
+
+  /// Overrides the sheet heading; defaults to 'Tambahkan Aktivitas'.
+  final String? title;
 
   @override
-  State<AddActivityBottomSheet> createState() => _AddActivityBottomSheetState();
+  ConsumerState<AddActivityBottomSheet> createState() => _AddActivityBottomSheetState();
 }
 
-class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
+class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet> {
   String _selectedCategory = 'Semua';
   String? _selectedActivity;
 
+  /// Only categories that actually have catalog items appear as chips —
+  /// an unmapped label used to fall through and show everything.
   static const _categoryLabels = {
     'Perawatan diri': ActivityCategory.selfCare,
     'Makan': ActivityCategory.meal,
     'Belajar': ActivityCategory.study,
     'Bermain': ActivityCategory.play,
     'Istirahat': ActivityCategory.bedtime,
+    'Terapi': ActivityCategory.therapy,
+    'Menunggu': ActivityCategory.waiting,
+    'Emosi': ActivityCategory.emotion,
   };
 
-  List<ActivityCatalogItem> _filteredCatalog(String selectedCategory) {
+  List<ActivityCatalogItem> _filteredCatalog(String selectedCategory, List<ActivityCatalogItem> custom) {
+    if (widget.only != null) return ActivityCatalog.byCategory(widget.only!, custom);
     final category = _categoryLabels[selectedCategory];
-    if (category == null) return ActivityCatalog.items;
-    return ActivityCatalog.items.where((item) => item.category == category).toList();
+    if (category == null) return ActivityCatalog.allWith(custom);
+    return ActivityCatalog.byCategory(category, custom);
   }
 
   @override
   Widget build(BuildContext context) {
-    final categories = [
-      'Semua', 'Perawatan diri', 'Makan', 'Belajar', 
-      'Transisi', 'Bermain', 'Sosial', 'Istirahat', 'Menunggu', 'Emosi'
-    ];
+    final categories = ['Semua', ..._categoryLabels.keys];
+    final custom = ref.watch(currentChildProvider).valueOrNull?.customActivities ?? const [];
 
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
@@ -72,13 +86,15 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Tambahkan Aktivitas',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 26,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  widget.title ?? 'Tambahkan Aktivitas',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 26,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               GestureDetector(
@@ -110,7 +126,8 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Chips Kategori
+          // Chips Kategori — hidden when the sheet is locked to one category
+          if (widget.only == null)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -148,7 +165,7 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
           // Grid Aktivitas
           Expanded(
             child: Builder(builder: (context) {
-              final items = _filteredCatalog(_selectedCategory);
+              final items = _filteredCatalog(_selectedCategory, custom);
               return GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,

@@ -9,9 +9,17 @@ import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/activity.dart';
+import '../../../models/enums.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
+
+/// How the AI's suggested prompting strategy reads to a parent.
+const _promptStrategyLabels = {
+  PromptType.visual: 'tunjukkan kartu visual',
+  PromptType.voice: 'bacakan instruksi dengan suara',
+  PromptType.text: 'beri instruksi singkat tertulis',
+};
 
 class BuddyPage extends ConsumerStatefulWidget {
   const BuddyPage({super.key});
@@ -22,6 +30,7 @@ class BuddyPage extends ConsumerStatefulWidget {
 
 class _BuddyPageState extends ConsumerState<BuddyPage> {
   Recommendation? _recommendation;
+  ProgressAnalysis? _analysis;
   bool _isLoading = false;
   String? _error;
 
@@ -196,7 +205,11 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 12)],
       ),
-      child: _recommendation == null ? _buildIdleState() : _buildRecommendationCard(_recommendation!),
+      child: switch ((_recommendation, _analysis)) {
+        (final Recommendation rec, _) => _buildRecommendationCard(rec),
+        (_, final ProgressAnalysis analysis) => _buildAnalysisCard(analysis),
+        _ => _buildIdleState(),
+      },
     );
   }
 
@@ -233,12 +246,82 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
             ),
           ),
         ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _fetchAnalysis,
+            icon: const Icon(Icons.insights_outlined, size: 20),
+            label: const Text('Analisis Perkembangan'),
+          ),
+        ),
       ],
     );
   }
 
+  /// RF-10. Framed as input for the parent's decision, never as a verdict.
+  Widget _buildAnalysisCard(ProgressAnalysis analysis) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Analisis Perkembangan', style: AppTextStyles.headingM),
+        const SizedBox(height: 8),
+        Text(analysis.summary, style: AppTextStyles.bodyM),
+        if (analysis.strengths.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text('Sudah berkembang', style: AppTextStyles.labelL),
+          for (final item in analysis.strengths) Text('• $item', style: AppTextStyles.bodyS),
+        ],
+        if (analysis.concerns.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text('Perlu perhatian', style: AppTextStyles.labelL),
+          for (final item in analysis.concerns) Text('• $item', style: AppTextStyles.bodyS),
+        ],
+        if (analysis.nextStep.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text('Saran periode berikutnya', style: AppTextStyles.labelL),
+          Text(analysis.nextStep, style: AppTextStyles.bodyM),
+        ],
+        const SizedBox(height: 12),
+        Text(
+          'Analisis ini bersifat pendukung keputusan, bukan diagnosis. '
+          'Diskusikan dengan terapis pendamping.',
+          style: AppTextStyles.caption,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () => setState(() => _analysis = null),
+            child: const Text('Tutup'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _fetchAnalysis() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final child = await ref.read(currentChildProvider.future);
+      if (child == null) throw StateError('Profil anak belum tersedia.');
+      final logs = await ref.read(logsForChildProvider(child.id).future);
+      final analysis =
+          await ref.read(aiServiceProvider).analyseProgress(child: child, recentLogs: logs);
+      if (mounted) setState(() => _analysis = analysis);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Gagal membuat analisis: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Widget _buildRecommendationCard(Recommendation rec) {
-    final catalogItem = ActivityCatalog.byId(rec.activityId);
+    final custom = ref.watch(currentChildProvider).valueOrNull?.customActivities ?? const [];
+    final catalogItem = ActivityCatalog.byId(rec.activityId, custom);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -270,6 +353,21 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
         ),
         const SizedBox(height: 8),
         Text(rec.reason, style: AppTextStyles.bodyM),
+        const SizedBox(height: 8),
+        // The AI advises a prompting strategy; the parent decides whether to use
+        // it. Showing it is the whole point of a decision-support system.
+        Row(
+          children: [
+            const Icon(Icons.tips_and_updates_outlined, size: 18, color: AppColors.teal500),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'Saran strategi: ${_promptStrategyLabels[rec.recommendedPrompt]}',
+                style: AppTextStyles.bodyS,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -325,7 +423,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
     }
 
     final schedule = schedules.first;
-    final catalogItem = ActivityCatalog.byId(rec.activityId);
+    final catalogItem = ActivityCatalog.byId(rec.activityId, child.customActivities);
     final start = DateTime.now().add(const Duration(hours: 1));
     final newActivity = Activity(
       id: '${schedule.id}-${schedule.activities.length}-${DateTime.now().millisecondsSinceEpoch}',

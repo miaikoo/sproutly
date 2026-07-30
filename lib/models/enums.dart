@@ -40,5 +40,16 @@ enum ActivityCategory {
   play,
   exercise,
   bedtime,
+  emotion,
+  waiting,
   other,
+}
+
+/// The kind of visual support board. Persisted on `Schedule.type`; existing
+/// documents without the field are read back as [schedule].
+enum BoardType {
+  schedule,
+  firstThen,
+  waiting,
+  emotion,
 }
