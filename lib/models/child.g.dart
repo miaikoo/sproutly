@@ -13,6 +13,7 @@ Child _$ChildFromJson(Map<String, dynamic> json) => Child(
   birthDate: DateTime.parse(json['birthDate'] as String),
   severity: $enumDecode(_$SeverityEnumMap, json['severity']),
   photoUrl: json['photoUrl'] as String,
+  therapistId: json['therapistId'] as String?,
 );
 
 Map<String, dynamic> _$ChildToJson(Child instance) => <String, dynamic>{
@@ -22,6 +23,7 @@ Map<String, dynamic> _$ChildToJson(Child instance) => <String, dynamic>{
   'birthDate': instance.birthDate.toIso8601String(),
   'severity': _$SeverityEnumMap[instance.severity]!,
   'photoUrl': instance.photoUrl,
+  'therapistId': instance.therapistId,
 };
 
 const _$SeverityEnumMap = {

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,9 +36,35 @@ import '../../shared/widgets/app_shell.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
 
+/// Notifies GoRouter to re-evaluate `redirect` whenever auth state changes.
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
+const _publicRoutes = {AppRoutes.landing, AppRoutes.login, AppRoutes.register};
+
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: AppRoutes.landing,
+  refreshListenable: GoRouterRefreshStream(fb.FirebaseAuth.instance.authStateChanges()),
+  redirect: (context, state) {
+    final loggedIn = fb.FirebaseAuth.instance.currentUser != null;
+    final isPublicRoute = _publicRoutes.contains(state.matchedLocation);
+
+    if (!loggedIn && !isPublicRoute) return AppRoutes.landing;
+    if (loggedIn && isPublicRoute) return AppRoutes.home;
+    return null;
+  },
   routes: [
     // Routes for authentication
     GoRoute(
@@ -114,11 +143,14 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.boardDetail,
-      builder: (_, __) => const BoardDetailPage(),
+      builder: (_, state) => BoardDetailPage(scheduleId: state.pathParameters['id']!),
     ),
     GoRoute(
       path: AppRoutes.activity,
-      builder: (_, __) => const ActivityDetailPage(),
+      builder: (_, state) => ActivityDetailPage(
+        scheduleId: state.pathParameters['scheduleId']!,
+        activityId: state.pathParameters['activityId']!,
+      ),
     ),
     GoRoute(
       path: AppRoutes.analytics,

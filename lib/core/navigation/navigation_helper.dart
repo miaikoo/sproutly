@@ -18,7 +18,8 @@ extension NavigationHelper on BuildContext {
 
   void goTherapist() => push(AppRoutes.therapist);
 
-  void goActivity() => push(AppRoutes.activity);
+  void goActivity(String scheduleId, String activityId) =>
+      push(AppRoutes.activityPath(scheduleId, activityId));
 
-  void goBoardDetail() => push(AppRoutes.boardDetail);
+  void goBoardDetail(String id) => push(AppRoutes.boardDetailPath(id));
 }

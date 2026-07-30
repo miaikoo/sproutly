@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/data/activity_catalog.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/navigation/app_routes.dart';
+import '../../models/enums.dart';
 import 'custom_icon.dart';
 
 class AddActivityBottomSheet extends StatefulWidget {
@@ -14,7 +16,21 @@ class AddActivityBottomSheet extends StatefulWidget {
 
 class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
   String _selectedCategory = 'Semua';
-  String? _selectedActivity; 
+  String? _selectedActivity;
+
+  static const _categoryLabels = {
+    'Perawatan diri': ActivityCategory.selfCare,
+    'Makan': ActivityCategory.meal,
+    'Belajar': ActivityCategory.study,
+    'Bermain': ActivityCategory.play,
+    'Istirahat': ActivityCategory.bedtime,
+  };
+
+  List<ActivityCatalogItem> _filteredCatalog(String selectedCategory) {
+    final category = _categoryLabels[selectedCategory];
+    if (category == null) return ActivityCatalog.items;
+    return ActivityCatalog.items.where((item) => item.category == category).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,62 +147,67 @@ class _AddActivityBottomSheetState extends State<AddActivityBottomSheet> {
 
           // Grid Aktivitas
           Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.85,
-              ),
-              itemCount: 9,
-              itemBuilder: (context, index) {
-                final activityName = 'Aktivitas ${index + 1}';
-                final isSelected = _selectedActivity == activityName;
-                
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedActivity = activityName;
-                    });
-                  },
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: AppColors.neutral300,
-                            borderRadius: BorderRadius.circular(16),
-                            border: isSelected
-                                ? Border.all(color: const Color(0xFF446860), width: 4)
-                                : null,
-                          ),
-                          child: isSelected
-                              ? const Align(
-                                  alignment: Alignment.topRight,
-                                  child: Padding(
-                                    padding: EdgeInsets.all(8.0),
+            child: Builder(builder: (context) {
+              final items = _filteredCatalog(_selectedCategory);
+              return GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.85,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  final isSelected = _selectedActivity == item.id;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedActivity = item.id;
+                      });
+                    },
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.neutral300,
+                              borderRadius: BorderRadius.circular(16),
+                              border: isSelected
+                                  ? Border.all(color: const Color(0xFF446860), width: 4)
+                                  : null,
+                            ),
+                            child: Stack(
+                              children: [
+                                Image.asset(item.image, fit: BoxFit.contain),
+                                if (isSelected)
+                                  const Align(
+                                    alignment: Alignment.topRight,
                                     child: Icon(Icons.check_circle, color: Color(0xFF446860)),
                                   ),
-                                )
-                              : null,
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        activityName,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontFamily: 'Nunito',
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                        const SizedBox(height: 8),
+                        Text(
+                          item.title,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontFamily: 'Nunito',
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }),
           ),
           const SizedBox(height: 16),
           GestureDetector(

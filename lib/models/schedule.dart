@@ -10,6 +10,8 @@ class Schedule {
 
   final String childId;
 
+  final String title;
+
   final DateTime date;
 
   final List<Activity> activities;
@@ -17,6 +19,7 @@ class Schedule {
   const Schedule({
     required this.id,
     required this.childId,
+    required this.title,
     required this.date,
     required this.activities,
   });

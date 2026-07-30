@@ -17,6 +17,8 @@ class Child {
 
   final String photoUrl;
 
+  final String? therapistId;
+
   const Child({
     required this.id,
     required this.parentId,
@@ -24,6 +26,7 @@ class Child {
     required this.birthDate,
     required this.severity,
     required this.photoUrl,
+    this.therapistId,
   });
 
   factory Child.fromJson(Map<String, dynamic> json) =>

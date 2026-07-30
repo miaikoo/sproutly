@@ -12,8 +12,12 @@ class AppRoutes {
   static const profile = '/profile';
   static const settings = '/settings';
 
-  static const boardDetail = '/board/detail';
-  static const activity = '/activity';
+  static const boardDetail = '/board/detail/:id';
+  static const activity = '/activity/:scheduleId/:activityId';
+
+  static String boardDetailPath(String id) => '/board/detail/$id';
+  static String activityPath(String scheduleId, String activityId) =>
+      '/activity/$scheduleId/$activityId';
 
   // Create board
   static const createBoard = '/board/create';

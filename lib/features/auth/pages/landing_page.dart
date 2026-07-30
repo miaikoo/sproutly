@@ -31,6 +31,18 @@ class LandingPage extends StatelessWidget {
                   AppSpacing.gapXXL,
                   _buildActionButton(
                     context,
+                    label: 'Masuk',
+                    route: AppRoutes.login,
+                  ),
+                  AppSpacing.gapMD,
+                  _buildActionButton(
+                    context,
+                    label: 'Daftar',
+                    route: AppRoutes.register,
+                  ),
+                  AppSpacing.gapXXL,
+                  _buildActionButton(
+                    context,
                     label: 'Go to Home',
                     route: AppRoutes.home,
                   ),

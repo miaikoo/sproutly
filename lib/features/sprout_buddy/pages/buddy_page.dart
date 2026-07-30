@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/data/activity_catalog.dart';
+import '../../../core/services/ai_service.dart';
+import '../../../core/services/child_service.dart';
+import '../../../core/services/behaviour_log_service.dart';
+import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../models/activity.dart';
+import '../../../models/recommendation.dart';
+import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
 
-class BuddyPage extends StatelessWidget {
+class BuddyPage extends ConsumerStatefulWidget {
   const BuddyPage({super.key});
+
+  @override
+  ConsumerState<BuddyPage> createState() => _BuddyPageState();
+}
+
+class _BuddyPageState extends ConsumerState<BuddyPage> {
+  Recommendation? _recommendation;
+  bool _isLoading = false;
+  String? _error;
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +42,12 @@ class BuddyPage extends StatelessWidget {
                   right: 0,
                   child: _buildHeader(),
                 ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: _buildRecommendationPanel(),
+                ),
               ],
             ),
           ),
@@ -38,10 +64,10 @@ class BuddyPage extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             AppColors.background,
-            AppColors.background.withOpacity(0.8), 
-            AppColors.background.withOpacity(0.0), 
+            AppColors.background.withOpacity(0.8),
+            AppColors.background.withOpacity(0.0),
           ],
-          stops: const [0.3, 0.7, 1.0], 
+          stops: const [0.3, 0.7, 1.0],
         ),
       ),
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 48),
@@ -53,7 +79,7 @@ class BuddyPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'John Doe',
+                'SproutGuide',
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 28,
@@ -63,55 +89,12 @@ class BuddyPage extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Perjalanan sejak 16/07/2026',
+                'Rekomendasi aktivitas berbasis AI',
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 16,
                   fontFamily: 'Nunito',
                   fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF7EA29C),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  children: const [
-                    CustomIcon(
-                      assetName: 'assets/icons/glyphs_coin-bold.svg', 
-                      size: 20,
-                      color: AppColors.white,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      '28',
-                      style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 18,
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFC4806C),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const CustomIcon(
-                  assetName: 'assets/icons/solar_shop-2-bold.svg', 
-                  size: 24,
-                  color: AppColors.white,
                 ),
               ),
             ],
@@ -132,15 +115,13 @@ class BuddyPage extends StatelessWidget {
   }
 
   Widget _buildMapChunk(BuildContext context, {required int chunkIndex}) {
-    // AscpectRatio 10:16 
     return AspectRatio(
-      aspectRatio: 10 / 16, 
+      aspectRatio: 10 / 16,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
           final h = constraints.maxHeight;
 
-          // Coordinate Percentage
           final nodes = [
             const Offset(0.65, 0.85),
             const Offset(0.18, 0.60),
@@ -150,34 +131,29 @@ class BuddyPage extends StatelessWidget {
 
           return Stack(
             children: [
-              // Layer 1 - Background 
               Positioned.fill(
                 child: Image.asset(
                   'assets/images/buddy_background.png',
                   fit: BoxFit.cover,
                 ),
               ),
-
-              // Layer 2 - Stepping Stones
               ...nodes.asMap().entries.map((e) {
                 final isActive = chunkIndex == 0 && e.key == 0;
-                
+
                 return Positioned(
                   left: e.value.dx * w - 45,
-                  top: e.value.dy * h - 30, 
+                  top: e.value.dy * h - 30,
                   child: _buildNode(isActive: isActive),
                 );
-              }).toList(),
-
-              // Layer 3 - Companion
+              }),
               if (chunkIndex == 0)
                 Positioned(
                   left: nodes[0].dx * w - 100,
-                  top: nodes[0].dy * h - 220, 
+                  top: nodes[0].dy * h - 220,
                   child: Image.asset(
                     'assets/images/Bahagia.png',
-                    width: 200,  
-                    height: 250, 
+                    width: 200,
+                    height: 250,
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -188,10 +164,9 @@ class BuddyPage extends StatelessWidget {
     );
   }
 
-  // Widget Stepping Stone
   Widget _buildNode({bool isActive = false}) {
     return Container(
-      width: 100, 
+      width: 100,
       height: 70,
       decoration: ShapeDecoration(
         color: isActive ? const Color(0xFFF1F5F4) : const Color(0xFFB8D2CE),
@@ -210,5 +185,170 @@ class BuddyPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildRecommendationPanel() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 12)],
+      ),
+      child: _recommendation == null ? _buildIdleState() : _buildRecommendationCard(_recommendation!),
+    );
+  }
+
+  Widget _buildIdleState() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_error != null) ...[
+          Text(_error!, style: AppTextStyles.bodyS.copyWith(color: AppColors.error)),
+          const SizedBox(height: 8),
+        ],
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.peach500),
+            onPressed: _fetchRecommendation,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CustomIcon(
+                  assetName: 'assets/icons/solar_clipboard-add-outline.svg',
+                  size: 20,
+                  color: AppColors.white,
+                ),
+                const SizedBox(width: 8),
+                Text('Dapatkan Rekomendasi', style: AppTextStyles.headingM.copyWith(color: AppColors.white)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecommendationCard(Recommendation rec) {
+    final catalogItem = ActivityCatalog.byId(rec.activityId);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppColors.neutral200,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Image.asset(catalogItem.image, fit: BoxFit.contain),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(catalogItem.title, style: AppTextStyles.headingM),
+                  Text(
+                    'Keyakinan: ${(rec.confidence * 100).round()}%',
+                    style: AppTextStyles.caption,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(rec.reason, style: AppTextStyles.bodyM),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => setState(() => _recommendation = null),
+                child: const Text('Abaikan'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.teal500),
+                onPressed: () => _acceptRecommendation(rec),
+                child: const Text('Tambahkan'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _fetchRecommendation() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final child = await ref.read(currentChildProvider.future);
+      if (child == null) throw StateError('Profil anak belum tersedia.');
+      final logs = await ref.read(logsForChildProvider(child.id).future);
+      final rec = await ref.read(aiServiceProvider).recommendActivity(child: child, recentLogs: logs);
+      if (mounted) setState(() => _recommendation = rec);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Gagal mendapatkan rekomendasi: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _acceptRecommendation(Recommendation rec) async {
+    final child = await ref.read(currentChildProvider.future);
+    if (child == null) return;
+    final schedules = await ref.read(schedulesForChildProvider(child.id).future);
+    if (schedules.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Buat papan jadwal terlebih dahulu di SproutPlan.')),
+        );
+      }
+      return;
+    }
+
+    final schedule = schedules.first;
+    final catalogItem = ActivityCatalog.byId(rec.activityId);
+    final start = DateTime.now().add(const Duration(hours: 1));
+    final newActivity = Activity(
+      id: '${schedule.id}-${schedule.activities.length}-${DateTime.now().millisecondsSinceEpoch}',
+      title: catalogItem.title,
+      icon: catalogItem.image,
+      category: catalogItem.category,
+      startTime: start,
+      endTime: start.add(const Duration(minutes: 15)),
+    );
+    final updated = Schedule(
+      id: schedule.id,
+      childId: schedule.childId,
+      title: schedule.title,
+      date: schedule.date,
+      activities: [...schedule.activities, newActivity],
+    );
+    await ref.read(scheduleServiceProvider).saveSchedule(updated);
+
+    if (mounted) {
+      setState(() => _recommendation = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${catalogItem.title} ditambahkan ke ${schedule.title}.')),
+      );
+    }
   }
 }

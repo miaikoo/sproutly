@@ -54,13 +54,35 @@ class SettingsPage extends StatelessWidget {
                   _buildSection(
                     title: 'AKUN',
                     child: _buildCardAction(
-                      iconAsset: 'assets/icons/solar_shield-keyhole-minimalistic-bold.svg', 
+                      iconAsset: 'assets/icons/solar_shield-keyhole-minimalistic-bold.svg',
                       title: 'Keamanan Akun',
                       subtitle: 'Ubah email dan password',
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
+                  _buildSection(
+                    title: 'SPROUTTRACK',
+                    child: _buildCardAction(
+                      iconAsset: 'assets/icons/solar_running-2-bold.svg',
+                      title: 'Perkembangan Anak',
+                      subtitle: 'Lihat statistik dan laporan perkembangan',
+                      onTap: () => context.push(AppRoutes.analytics),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  _buildSection(
+                    title: 'SPROUTLINK',
+                    child: _buildCardAction(
+                      iconAsset: 'assets/icons/solar_accessibility-bold.svg',
+                      title: 'Terapis',
+                      subtitle: 'Hubungkan dan kolaborasi dengan terapis',
+                      onTap: () => context.push(AppRoutes.therapist),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   _buildAboutSection(),
                   const SizedBox(height: 48),
                   
@@ -194,8 +216,15 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCardAction({required String iconAsset, required String title, required String subtitle}) {
-    return Container(
+  Widget _buildCardAction({
+    required String iconAsset,
+    required String title,
+    required String subtitle,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -243,6 +272,7 @@ class SettingsPage extends StatelessWidget {
             color: AppColors.neutral800,
           ),
         ],
+      ),
       ),
     );
   }

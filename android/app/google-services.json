@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "573352935480",
+    "project_id": "sproutly-asd",
+    "storage_bucket": "sproutly-asd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:573352935480:android:d68ba18819d301c7da66cd",
+        "android_client_info": {
+          "package_name": "com.example.sprout_ly_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVFLFabH8ARqJObN8O43MSTvxzBujg1H0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
