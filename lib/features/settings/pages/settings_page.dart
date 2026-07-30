@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -51,6 +51,7 @@ class SettingsPage extends ConsumerWidget {
                       iconAsset: 'assets/icons/solar_accessibility-bold.svg', 
                       title: 'Pengaturan Aksesibilitas',
                       subtitle: 'Ukuran icon, ukuran text, animasi, dan suara',
+                      onTap: () => context.push(AppRoutes.accessibility),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -61,6 +62,7 @@ class SettingsPage extends ConsumerWidget {
                       iconAsset: 'assets/icons/solar_shield-keyhole-minimalistic-bold.svg',
                       title: 'Keamanan Akun',
                       subtitle: 'Ubah email dan password',
+                      onTap: () => context.push(AppRoutes.security),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -87,7 +89,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  _buildAboutSection(),
+                  _buildAboutSection(context),
                   const SizedBox(height: 48),
                   
                   _buildLogoutCard(context, ref),
@@ -246,7 +248,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAboutSection() {
+  Widget _buildAboutSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -265,13 +267,29 @@ class SettingsPage extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              _buildAboutItem('assets/icons/ix_about.svg', 'Tentang Sprout.ly'),
+              _buildAboutItem(
+                'assets/icons/ix_about.svg',
+                'Tentang Sprout.ly',
+                onTap: () => context.push(AppRoutes.about),
+              ),
               Divider(height: 1, color: AppColors.neutral800.withValues(alpha: 0.15), indent: 16, endIndent: 16),
-              _buildAboutItem('assets/icons/material-symbols_privacy-tip-outline-rounded.svg', 'Kebijakan Privasi'),
+              _buildAboutItem(
+                'assets/icons/material-symbols_privacy-tip-outline-rounded.svg',
+                'Kebijakan Privasi',
+                onTap: () => context.push(AppRoutes.privacy),
+              ),
               Divider(height: 1, color: AppColors.neutral800.withValues(alpha: 0.15), indent: 16, endIndent: 16),
-              _buildAboutItem('assets/icons/material-symbols_text-snippet-outline-rounded.svg', 'Ketentuan Layanan'),
+              _buildAboutItem(
+                'assets/icons/material-symbols_text-snippet-outline-rounded.svg',
+                'Ketentuan Layanan',
+                onTap: () => context.push(AppRoutes.terms),
+              ),
               Divider(height: 1, color: AppColors.neutral800.withValues(alpha: 0.15), indent: 16, endIndent: 16),
-              _buildAboutItem('assets/icons/material-symbols_support.svg', 'Dukungan Pelanggan'),
+              _buildAboutItem(
+                'assets/icons/material-symbols_support.svg',
+                'Dukungan Pelanggan',
+                onTap: () => context.push(AppRoutes.support),
+              ),
             ],
           ),
         ),
@@ -279,29 +297,33 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAboutItem(String iconAsset, String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          CustomIcon(
-            assetName: iconAsset,
-            size: 32,
-            color: AppColors.neutral800,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              title,
-              style: AppTextStyles.headingL,
+  Widget _buildAboutItem(String iconAsset, String title, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        color: Colors.transparent, // make entire row tappable
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            CustomIcon(
+              assetName: iconAsset,
+              size: 32,
+              color: AppColors.neutral800,
             ),
-          ),
-          const CustomIcon(
-            assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
-            size: 28,
-            color: AppColors.neutral800,
-          ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTextStyles.headingL,
+              ),
+            ),
+            const CustomIcon(
+              assetName: 'assets/icons/solar_alt-arrow-right-outline.svg',
+              size: 28,
+              color: AppColors.neutral800,
+            ),
+          ],
+        ),
       ),
     );
   }

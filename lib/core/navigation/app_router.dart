@@ -11,6 +11,12 @@ import '../../features/home/pages/home_page.dart';
 import '../../features/profile/pages/profile_page.dart';
 import '../../features/profile/pages/child_profile_page.dart';
 import '../../features/settings/pages/settings_page.dart';
+import '../../features/settings/pages/accessibility_settings_page.dart';
+import '../../features/settings/pages/account_security_page.dart';
+import '../../features/settings/pages/about_sproutly_page.dart';
+import '../../features/settings/pages/privacy_policy_page.dart';
+import '../../features/settings/pages/terms_of_service_page.dart';
+import '../../features/settings/pages/customer_support_page.dart';
 
 import '../../features/sprout_plan/pages/board_page.dart';
 import '../../features/sprout_plan/pages/create_board_page.dart';
@@ -142,6 +148,30 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.settings,
       builder: (_, _) => const SettingsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.accessibility,
+      builder: (_, _) => const AccessibilitySettingsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.security,
+      builder: (_, _) => const AccountSecurityPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.about,
+      builder: (_, _) => const AboutSproutlyPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.privacy,
+      builder: (_, _) => const PrivacyPolicyPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.terms,
+      builder: (_, _) => const TermsOfServicePage(),
+    ),
+    GoRoute(
+      path: AppRoutes.support,
+      builder: (_, _) => const CustomerSupportPage(),
     ),
     GoRoute(
       path: AppRoutes.boardDetail,

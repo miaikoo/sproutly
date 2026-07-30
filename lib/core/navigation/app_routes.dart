@@ -13,6 +13,12 @@ class AppRoutes {
 
   static String childProfilePath(String childId) => '/profile/$childId';
   static const settings = '/settings';
+  static const accessibility = '/settings/accessibility';
+  static const security = '/settings/security';
+  static const about = '/settings/about';
+  static const privacy = '/settings/privacy';
+  static const terms = '/settings/terms';
+  static const support = '/settings/support';
 
   static const boardDetail = '/board/detail/:id';
   static const runBoard = '/board/run/:id';
