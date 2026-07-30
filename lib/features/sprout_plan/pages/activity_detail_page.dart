@@ -16,7 +16,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../models/activity.dart';
 import '../../../models/behaviour_log.dart';
 import '../../../models/enums.dart';
-import '../../../shared/widgets/custom_icon.dart';
 import '../../../shared/widgets/activity_image.dart';
 
 const _moodOptions = {
@@ -90,14 +89,12 @@ class _ActivityDetailPageState extends ConsumerState<ActivityDetailPage> {
         children: [
           Row(
             children: [
-              GestureDetector(
-                onTap: () => context.pop(),
-                child: const CustomIcon(
-                  assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-                  size: 28,
-                  color: AppColors.neutral800,
-                ),
-              ),
+              IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
+          ),
               AppSpacing.gapHMD,
               Expanded(child: Text(activity.title, style: AppTextStyles.displayM)),
             ],

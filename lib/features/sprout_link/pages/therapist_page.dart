@@ -12,7 +12,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../models/child.dart';
 import '../../../models/enums.dart';
 import '../../../models/therapist_note.dart';
-import '../../../shared/widgets/custom_icon.dart';
 import '../../sprout_track/widgets/child_progress_panel.dart';
 
 class TherapistPage extends ConsumerWidget {
@@ -55,13 +54,11 @@ class _Header extends StatelessWidget {
       padding: AppSpacing.pagePadding,
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           AppSpacing.gapHMD,
           Text(title, style: AppTextStyles.displayL),

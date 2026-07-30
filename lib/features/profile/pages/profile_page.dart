@@ -66,13 +66,11 @@ class ProfilePage extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           const SizedBox(width: 16),
           Text(

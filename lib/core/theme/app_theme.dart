@@ -38,10 +38,10 @@ class AppTheme {
   static final ThemeData light = ThemeData(
     useMaterial3: true,
     scaffoldBackgroundColor: AppColors.background,
-    fontFamily: AppTextStyles.family,
+    fontFamily: AppTextStyles.primary,
 
     colorScheme: const ColorScheme.light(
-      primary: AppColors.actionSecondary,
+      primary: AppColors.actionPrimary,
       onPrimary: AppColors.onFilled,
       primaryContainer: AppColors.teal100,
       onPrimaryContainer: AppColors.onTint,
@@ -86,7 +86,7 @@ class AppTheme {
       bodyLarge: AppTextStyles.bodyL,
       bodyMedium: AppTextStyles.bodyM,
       bodySmall: AppTextStyles.bodyS,
-      labelLarge: AppTextStyles.button,
+      labelLarge: AppTextStyles.buttonL,
       labelMedium: AppTextStyles.labelL,
       labelSmall: AppTextStyles.caption,
     ),
@@ -120,7 +120,7 @@ class AppTheme {
         disabledForegroundColor: AppColors.textDisabled,
         minimumSize: const Size(minTarget, minTarget),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-        textStyle: AppTextStyles.button,
+        textStyle: AppTextStyles.buttonL,
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.button),
         elevation: 0,
       ),
@@ -128,21 +128,21 @@ class AppTheme {
 
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.actionSecondary,
+        foregroundColor: AppColors.actionPrimary,
         minimumSize: const Size(minTarget, minTarget),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        textStyle: AppTextStyles.button,
-        side: const BorderSide(color: AppColors.actionSecondary, width: 1.5),
+        textStyle: AppTextStyles.buttonL,
+        side: const BorderSide(color: AppColors.actionPrimary, width: 1.5),
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.button),
       ),
     ),
 
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: AppColors.actionSecondary,
+        foregroundColor: AppColors.actionPrimary,
         minimumSize: const Size(minTarget, minTarget),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        textStyle: AppTextStyles.button,
+        textStyle: AppTextStyles.buttonL,
       ),
     ),
 
@@ -157,7 +157,7 @@ class AppTheme {
 
     chipTheme: ChipThemeData(
       backgroundColor: AppColors.surface,
-      selectedColor: AppColors.actionSecondary,
+      selectedColor: AppColors.actionPrimary,
       side: const BorderSide(color: AppColors.border),
       labelStyle: AppTextStyles.bodyS,
       secondaryLabelStyle: AppTextStyles.bodyS.copyWith(color: AppColors.onFilled),
@@ -250,7 +250,7 @@ class AppTheme {
     ),
 
     progressIndicatorTheme: const ProgressIndicatorThemeData(
-      color: AppColors.actionSecondary,
+      color: AppColors.actionPrimary,
       linearTrackColor: AppColors.neutral200,
       circularTrackColor: AppColors.neutral200,
     ),

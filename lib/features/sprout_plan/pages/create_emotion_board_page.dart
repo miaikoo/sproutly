@@ -9,8 +9,8 @@ import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../shared/widgets/slot_box.dart';
 import 'board_editor.dart';
-import '../../../shared/widgets/activity_image.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 class CreateEmotionBoardPage extends ConsumerStatefulWidget {
@@ -28,6 +28,11 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
   String? _thenAId;
   String? _thenBId;
   bool _isSaving = false;
+
+  /// The child's own activity cards, so a `custom-*` id in a slot
+  /// resolves to the right picture.
+  List<ActivityCatalogItem> get _custom =>
+      ref.watch(currentChildProvider).valueOrNull?.customActivities ?? const [];
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +62,7 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                               ),
                               const SizedBox(height: 16),
 
-                              _buildAddBox(
-                                borderColor: AppColors.peach500,
+                              SlotBox(
                                 activityId: _emotionId,
                                 // Locked to emotion cards: this slot names the
                                 // feeling the board is about.
@@ -67,6 +71,9 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                                   only: ActivityCategory.emotion,
                                   title: 'Pilih Emosi',
                                 ),
+                                size: 120,
+                                accent: AppColors.peach500,
+                                customActivities: _custom,
                               ),
                               const SizedBox(height: 24),
 
@@ -80,10 +87,12 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      _buildAddBox(
-                                        borderColor: AppColors.peach500,
+                                      SlotBox(
                                         activityId: _copingAId,
                                         onTap: () => _pick((id) => _copingAId = id),
+                                        size: 120,
+                                        accent: AppColors.peach500,
+                                        customActivities: _custom,
                                       ),
                                       const Padding(
                                         padding: EdgeInsets.symmetric(horizontal: 16),
@@ -92,10 +101,12 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                                           style: AppTextStyles.displayM,
                                         ),
                                       ),
-                                      _buildAddBox(
-                                        borderColor: AppColors.peach500,
+                                      SlotBox(
                                         activityId: _copingBId,
                                         onTap: () => _pick((id) => _copingBId = id),
+                                        size: 120,
+                                        accent: AppColors.peach500,
+                                        customActivities: _custom,
                                       ),
                                     ],
                                   ),
@@ -122,13 +133,11 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -142,28 +151,24 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _editTitle,
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_pen-linear.svg',
-              size: 28,
-              color: AppColors.peach500,
-            ),
+          IconButton(
+            onPressed: _editTitle,
+            icon: const Icon(Icons.edit_outlined),
+            color: AppColors.peach500,
+            tooltip: 'Ubah nama',
           ),
           const SizedBox(width: 16),
-          GestureDetector(
-            onTap: _isSaving ? null : _save,
-            child: _isSaving
+          IconButton(
+            onPressed: _isSaving ? null : _save,
+            icon: _isSaving
                 ? const SizedBox(
-                    height: 24,
-                    width: 24,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const CustomIcon(
-                    assetName: 'assets/icons/lucide_save.svg',
-                    size: 28,
-                    color: AppColors.peach500,
-                  ),
+                : const Icon(Icons.save_outlined),
+            color: AppColors.peach500,
+            tooltip: 'Simpan papan',
           ),
         ],
       ),
@@ -224,10 +229,13 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildAddBox(
-                borderColor: AppColors.white,
+              SlotBox(
                 activityId: _thenAId,
                 onTap: () => _pick((id) => _thenAId = id),
+                size: 120,
+                accent: AppColors.peach500,
+                onLight: false,
+                customActivities: _custom,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -236,10 +244,13 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
                   style: AppTextStyles.headingL.copyWith(color: AppColors.white),
                 ),
               ),
-              _buildAddBox(
-                borderColor: AppColors.white,
+              SlotBox(
                 activityId: _thenBId,
                 onTap: () => _pick((id) => _thenBId = id),
+                size: 120,
+                accent: AppColors.peach500,
+                onLight: false,
+                customActivities: _custom,
               ),
             ],
           ),
@@ -248,44 +259,6 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
     );
   }
 
-  Widget _buildAddBox({
-    required Color borderColor,
-    required String? activityId,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 120,
-        height: 120,
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.3),
-          border: Border.all(color: borderColor, width: 2),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: activityId == null
-            ? Center(child: Icon(Icons.add, size: 40, color: borderColor))
-            : _slotPreview(activityId),
-      ),
-    );
-  }
-
-  Widget _slotPreview(String activityId) {
-    final item = ActivityCatalog.byId(activityId);
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Expanded(child: ActivityImage(item.image)),
-        Text(
-          item.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.caption,
-        ),
-      ],
-    );
-  }
 
   Future<void> _editTitle() async {
     final result = await promptForTitle(context, current: _title);

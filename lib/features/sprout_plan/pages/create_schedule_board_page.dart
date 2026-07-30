@@ -66,11 +66,24 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                           ),
                           child: Column(
                             children: [
+                              // Column headings phrased as the child reads the
+                              // board, matching the design.
                               const Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
-                                  Text('Aktivitas', style: AppTextStyles.bodyS),
-                                  Text('Waktu', style: AppTextStyles.bodyS),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      'Pertama, aku harus',
+                                      style: AppTextStyles.bodyS,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Waktu',
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.bodyS,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 12),
@@ -104,13 +117,11 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -120,21 +131,18 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (_isSaving)
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          else
-            GestureDetector(
-              onTap: _save,
-              child: const CustomIcon(
-                assetName: 'assets/icons/lucide_save.svg',
-                size: 28,
-                color: AppColors.neutral800,
-              ),
-            ),
+          IconButton(
+            onPressed: _isSaving ? null : _save,
+            icon: _isSaving
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save_outlined),
+            color: AppColors.steel700,
+            tooltip: 'Simpan papan',
+          ),
         ],
       ),
     );

@@ -16,10 +16,10 @@ import '../../../shared/widgets/add_activity_bottom_sheet.dart';
 
 /// Card colour per board type, matching each create page's palette.
 const _boardColors = {
-  BoardType.schedule: AppColors.mauve300,
-  BoardType.firstThen: AppColors.steel300,
-  BoardType.waiting: AppColors.cream300,
-  BoardType.emotion: AppColors.peach300,
+  BoardType.schedule: AppColors.boardSchedule,
+  BoardType.firstThen: AppColors.boardFirstThen,
+  BoardType.waiting: AppColors.boardWaiting,
+  BoardType.emotion: AppColors.boardEmotion,
 };
 
 Color boardColor(BoardType type) => _boardColors[type] ?? _boardColors[BoardType.schedule]!;
@@ -131,38 +131,42 @@ class BoardTile extends StatelessWidget {
           borderRadius: AppRadius.tile,
           onTap: () => context.push(AppRoutes.boardDetailPath(schedule.id)),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(AppSpacing.md),
+                  padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
                     color: boardColor(schedule.type),
                     borderRadius: AppRadius.tile,
                   ),
-                  child: thumbnail != null
-                      ? ActivityImage(thumbnail)
-                      : Icon(
-                          Icons.event_note_outlined,
-                          color: AppColors.onTint.withValues(alpha: 0.55),
-                          size: 32,
-                        ),
+                  // The artwork sits on its own white card inside the coloured
+                  // tile, as in the mockups — it keeps the illustration readable
+                  // whatever hue the board type carries.
+                  child: Container(
+                    padding: const EdgeInsets.all(AppSpacing.xs),
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: AppRadius.card,
+                    ),
+                    child: thumbnail != null
+                        ? ActivityImage(thumbnail)
+                        : Icon(
+                            Icons.event_note_outlined,
+                            color: AppColors.textSecondary,
+                            size: 28,
+                          ),
+                  ),
                 ),
               ),
-              AppSpacing.gapXS,
+              AppSpacing.gapSM,
+              // Centred under the tile, matching the design.
               Text(
                 schedule.title,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: AppTextStyles.headingS,
-              ),
-              // The type is what distinguishes two boards with similar names.
-              Text(
-                boardTypeLabel(schedule.type),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.caption,
               ),
             ],
           ),

@@ -108,6 +108,58 @@ Yang sengaja dilewat: reorder papan drag-and-drop (ubah nama + hapus sudah cukup
 tingkat kesulitan transisi (dua pertanyaan per aktivitas terlalu bikin repot di tengah
 rutinitas — catat lewat halaman aktivitas tunggal kalau perlu).
 
+## P5 — Selaraskan dengan desain Figma (`ref/`)
+
+Sumber: `ref/color system.html`, `ref/text system.html`, `ref/mock up/*.png`.
+Detail lengkap di `DESIGN.md`.
+
+- [x] **Color system** ditranskrip persis: 7 ramp x 10 langkah (50-900).
+      Menemukan akar masalah kartu mauve: `neutral300` ditulis `DCCAD7` padahal
+      Figma `CCDAD7` — transposisi dua huruf. Bukan keputusan desain, salah ketik.
+      `teal700`, `peach500`, `neutral50` juga meleset. Warna mentah di halaman
+      justru nilai Figma yang benar.
+- [x] **Text system** persis spesifikasi: Display/Heading/Body/Label/Button/Time/Caption.
+- [x] **Font Nunito + Nunito Sans diunduh dan di-bundle** sebagai variable font di
+      `assets/fonts/`. Sebelumnya tidak pernah ada di project, jadi 76 deklarasi
+      `fontFamily: 'Nunito'` diam-diam jatuh ke Roboto.
+- [x] **Bottom nav dikembalikan ke bentuk Figma** — bar pil, lingkaran terracotta
+      di tab aktif. Dibatasi 520dp supaya di tablet tetap pil. Rail landscape pakai
+      kosakata yang sama.
+- [x] Tile papan: ilustrasi di kartu putih dalam kotak berwarna, label di tengah.
+- [x] Home: kartu "sedang dikerjakan" teal50 bertepi teal200, plat gambar putih.
+- [x] Papan Saya: ikon + di header (bukan FAB), chip filter di dalam track pil teal100.
+- [x] Buat Papan: kartu opsi teal100 + radio peach, tombol dipin di bawah dengan
+      state disabled sesuai desain (peach200).
+- [x] `PageHeader` jadi komponen bersama; 13 tombol kembali buatan sendiri diganti
+      `IconButton` yang memenuhi target sentuh 48dp.
+
+**Catatan kontras.** Tabel "Kontras & Aksesibilitas" di Figma sudah tidak sinkron
+dengan nilai hex-nya: mengklaim "Sage 500 + White = 4.8:1 AA" padahal terukur
+2.79. Angka 6.2:1 yang ia tulis justru jatuh tepat di `teal700`. Karena desainnya
+menandai semua pasangan itu "AA", perbaikan mengikuti angka yang desainnya sendiri
+tetapkan. `peach500 + putih` tetap teks besar saja, sesuai catatan desainnya, dan
+tombol disabled `peach200 + putih` dibiarkan apa adanya — WCAG mengecualikan
+kontrol disabled.
+
+- [x] **`SlotBox`** jadi komponen bersama untuk kotak slot aktivitas — garis
+      putus-putus saat kosong, kartu aktivitas saat terisi. Motif ini ada di semua
+      halaman create dan sebelumnya ditulis ulang empat kali dengan ukuran, border,
+      dan ikon kosong yang berbeda-beda. Sekarang keempat papan terlihat satu produk,
+      dan slot bisa menampilkan aktivitas kustom (sebelumnya `ActivityCatalog.byId`
+      dipanggil tanpa daftar kustom, jadi kartu buatan orang tua muncul salah gambar).
+- [x] Ikon pensil & simpan di header create pages: 7 `GestureDetector` di bawah
+      48dp diganti `IconButton`.
+- [x] Label kolom papan jadwal disamakan dengan mockup ("Pertama, aku harus").
+
+### Sisa P5
+
+- [ ] Detail visual halaman create yang belum persis: tombol pil "Tambahkan Kegiatan"
+      (mauve) dan tautan "Gunakan Template" di papan jadwal
+- [ ] Samakan Profil dan Settings ke mockup
+- [ ] Buddy/toko companion — ada mockup `Buddy - toko.png` dan `toko companion.html`,
+      fitur toko ini belum ada di aplikasi sama sekali dan tidak ada di RF mana pun.
+      Perlu keputusan: bikin, atau abaikan.
+
 ## Catatan lingkungan build
 
 - `build/` pernah korup (cache Kotlin incremental: `supertypes.tab_i.len` hilang) dan bikin

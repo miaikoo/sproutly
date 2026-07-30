@@ -9,8 +9,8 @@ import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../shared/widgets/slot_box.dart';
 import 'board_editor.dart';
-import '../../../shared/widgets/activity_image.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 class CreateWaitingBoardPage extends ConsumerStatefulWidget {
@@ -27,6 +27,11 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
   String? _thenBId;
   int _waitMinutes = 5;
   bool _isSaving = false;
+
+  /// The child's own activity cards, so a `custom-*` id in a slot
+  /// resolves to the right picture.
+  List<ActivityCatalogItem> get _custom =>
+      ref.watch(currentChildProvider).valueOrNull?.customActivities ?? const [];
 
   @override
   Widget build(BuildContext context) {
@@ -56,10 +61,12 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
                               ),
                               const SizedBox(height: 16),
 
-                              _buildAddBox(
-                                borderColor: AppColors.olive500,
+                              SlotBox(
                                 activityId: _waitingForId,
                                 onTap: () => _pick((id) => _waitingForId = id),
+                                size: 120,
+                                accent: AppColors.olive500,
+                                customActivities: _custom,
                               ),
                               const SizedBox(height: 16),
 
@@ -91,13 +98,11 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -111,28 +116,24 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _editTitle,
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_pen-linear.svg',
-              size: 28,
-              color: AppColors.olive500,
-            ),
+          IconButton(
+            onPressed: _editTitle,
+            icon: const Icon(Icons.edit_outlined),
+            color: AppColors.olive500,
+            tooltip: 'Ubah nama',
           ),
           const SizedBox(width: 16),
-          GestureDetector(
-            onTap: _isSaving ? null : _save,
-            child: _isSaving
+          IconButton(
+            onPressed: _isSaving ? null : _save,
+            icon: _isSaving
                 ? const SizedBox(
-                    height: 24,
-                    width: 24,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const CustomIcon(
-                    assetName: 'assets/icons/lucide_save.svg',
-                    size: 28,
-                    color: AppColors.olive500,
-                  ),
+                : const Icon(Icons.save_outlined),
+            color: AppColors.olive500,
+            tooltip: 'Simpan papan',
           ),
         ],
       ),
@@ -223,10 +224,13 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildAddBox(
-                borderColor: AppColors.white,
+              SlotBox(
                 activityId: _thenAId,
                 onTap: () => _pick((id) => _thenAId = id),
+                size: 120,
+                accent: AppColors.olive500,
+                onLight: false,
+                customActivities: _custom,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -235,10 +239,13 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
                   style: AppTextStyles.headingL.copyWith(color: AppColors.white),
                 ),
               ),
-              _buildAddBox(
-                borderColor: AppColors.white,
+              SlotBox(
                 activityId: _thenBId,
                 onTap: () => _pick((id) => _thenBId = id),
+                size: 120,
+                accent: AppColors.olive500,
+                onLight: false,
+                customActivities: _custom,
               ),
             ],
           ),
@@ -247,44 +254,6 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
     );
   }
 
-  Widget _buildAddBox({
-    required Color borderColor,
-    required String? activityId,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 120,
-        height: 120,
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: AppColors.white.withValues(alpha: 0.3),
-          border: Border.all(color: borderColor, width: 2),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: activityId == null
-            ? Center(child: Icon(Icons.add, size: 40, color: borderColor))
-            : _slotPreview(activityId),
-      ),
-    );
-  }
-
-  Widget _slotPreview(String activityId) {
-    final item = ActivityCatalog.byId(activityId);
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Expanded(child: ActivityImage(item.image)),
-        Text(
-          item.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.caption,
-        ),
-      ],
-    );
-  }
 
   Future<void> _editTitle() async {
     final result = await promptForTitle(context, current: _title);

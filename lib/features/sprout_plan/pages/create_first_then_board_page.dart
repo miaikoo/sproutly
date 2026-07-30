@@ -10,8 +10,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
-import '../../../shared/widgets/activity_image.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/slot_box.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
 
 class CreateFirstThenBoardPage extends ConsumerStatefulWidget {
   const CreateFirstThenBoardPage({super.key});
@@ -77,13 +79,11 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -97,28 +97,24 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _editTitle,
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_pen-linear.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: _editTitle,
+            icon: const Icon(Icons.edit_outlined),
+            color: AppColors.neutral800,
+            tooltip: 'Ubah nama',
           ),
           const SizedBox(width: 16),
-          GestureDetector(
-            onTap: _isSaving ? null : _save,
-            child: _isSaving
+          IconButton(
+            onPressed: _isSaving ? null : _save,
+            icon: _isSaving
                 ? const SizedBox(
-                    height: 24,
-                    width: 24,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const CustomIcon(
-                    assetName: 'assets/icons/lucide_save.svg',
-                    size: 28,
-                    color: AppColors.neutral800,
-                  ),
+                : const Icon(Icons.save_outlined),
+            color: AppColors.neutral800,
+            tooltip: 'Simpan papan',
           ),
         ],
       ),
@@ -128,37 +124,23 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
   Widget _buildStepCard(String label, String? activityId, VoidCallback onTap) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      decoration: const BoxDecoration(
         color: AppColors.steel100,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.all(AppRadius.xl),
       ),
       child: Column(
         children: [
-          Text(
-            label,
-            style: AppTextStyles.displayM,
-          ),
-          const SizedBox(height: 24),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: double.infinity,
-              height: 160,
-              decoration: BoxDecoration(
-                color: AppColors.white.withValues(alpha: 0.5),
-                border: Border.all(color: AppColors.steel500, width: 2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: activityId == null
-                  ? const Center(
-                      child: CustomIcon(
-                        assetName: 'assets/icons/solar_clipboard-add-outline.svg',
-                        size: 36,
-                        color: AppColors.steel500,
-                      ),
-                    )
-                  : _slotPreview(activityId),
+          Text(label, style: AppTextStyles.displayM),
+          AppSpacing.gapLG,
+          SizedBox(
+            width: double.infinity,
+            height: 160,
+            child: SlotBox(
+              activityId: activityId,
+              onTap: onTap,
+              accent: AppColors.steel500,
+              customActivities: _custom,
             ),
           ),
         ],
@@ -166,23 +148,10 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
     );
   }
 
-  Widget _slotPreview(String activityId) {
-    final item = ActivityCatalog.byId(activityId);
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(child: ActivityImage(item.image)),
-          const SizedBox(height: 4),
-          Text(
-            item.title,
-            style: AppTextStyles.headingS,
-          ),
-        ],
-      ),
-    );
-  }
+  /// The child's own activity cards, so a `custom-*` id in a slot resolves to
+  /// the right picture.
+  List<ActivityCatalogItem> get _custom =>
+      ref.watch(currentChildProvider).valueOrNull?.customActivities ?? const [];
 
   Future<void> _editTitle() async {
     final result = await promptForTitle(context, current: _title);

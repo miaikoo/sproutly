@@ -1,9 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
+
 import '../../../core/navigation/app_routes.dart';
-import '../../../shared/widgets/custom_icon.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../shared/widgets/activity_image.dart';
+import '../../../shared/widgets/page_header.dart';
+
+/// The board types a parent can start from, with the route each one opens.
+const _options = [
+  (
+    title: 'Aktivitas',
+    image: 'assets/images/Belajar.png',
+    route: AppRoutes.createBoardActivity,
+  ),
+  (
+    title: 'Menunggu',
+    image: 'assets/images/Menunggu.png',
+    route: AppRoutes.createWaitingBoard,
+  ),
+  (
+    title: 'Emosi',
+    image: 'assets/images/Bahagia.png',
+    route: AppRoutes.createEmotionBoard,
+  ),
+];
 
 class CreateBoardPage extends StatefulWidget {
   const CreateBoardPage({super.key});
@@ -13,7 +36,7 @@ class CreateBoardPage extends StatefulWidget {
 }
 
 class _CreateBoardPageState extends State<CreateBoardPage> {
-  String? _selectedType;
+  String? _selected;
 
   @override
   Widget build(BuildContext context) {
@@ -22,29 +45,64 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+            constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               children: [
-                _buildHeader(context),
+                const PageHeader(title: 'Buat Papan Baru'),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xl,
+                      vertical: AppSpacing.md,
+                    ),
                     child: Column(
                       children: [
+                        AppSpacing.gapMD,
                         Text(
                           'Papan apa yang ingin kamu buat?',
                           textAlign: TextAlign.center,
-                          style: AppTextStyles.displayL,
+                          style: AppTextStyles.displayM,
                         ),
-                        const SizedBox(height: 32),
-                        _buildOptionCard('Aktivitas'),
-                        const SizedBox(height: 16),
-                        _buildOptionCard('Menunggu'),
-                        const SizedBox(height: 16),
-                        _buildOptionCard('Emosi'),
-                        const SizedBox(height: 48),
-                        _buildNextButton(),
+                        AppSpacing.gapXXL,
+                        for (final option in _options) ...[
+                          _OptionCard(
+                            title: option.title,
+                            image: option.image,
+                            selected: _selected == option.title,
+                            onTap: () => setState(() => _selected = option.title),
+                          ),
+                          AppSpacing.gapMD,
+                        ],
                       ],
+                    ),
+                  ),
+                ),
+                // Pinned to the bottom as in the design, so the choice and the
+                // confirmation never scroll apart.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.xl,
+                    AppSpacing.sm,
+                    AppSpacing.xl,
+                    AppSpacing.lg,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.peach500,
+                        // The design's own disabled treatment: a paler fill of
+                        // the same hue. WCAG exempts disabled controls from the
+                        // contrast minimum, so this one is faithful as drawn.
+                        disabledBackgroundColor: AppColors.peach200,
+                        disabledForegroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(AppRadius.pill),
+                        ),
+                      ),
+                      onPressed: _selected == null ? null : _next,
+                      child: const Text('Selanjutnya'),
                     ),
                   ),
                 ),
@@ -56,134 +114,91 @@ class _CreateBoardPageState extends State<CreateBoardPage> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
+  void _next() {
+    final option = _options.firstWhere((o) => o.title == _selected);
+    context.push(option.route);
+  }
+}
+
+class _OptionCard extends StatelessWidget {
+  const _OptionCard({
+    required this.title,
+    required this.image,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final String image;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      inMutuallyExclusiveGroup: true,
+      selected: selected,
+      label: title,
+      child: Material(
+        color: AppColors.teal100,
+        borderRadius: AppRadius.card,
+        child: InkWell(
+          borderRadius: AppRadius.card,
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.card,
+              border: Border.all(
+                color: selected ? AppColors.teal700 : AppColors.teal200,
+                width: selected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: ActivityImage(image),
+                ),
+                AppSpacing.gapHLG,
+                Expanded(child: Text(title, style: AppTextStyles.headingL)),
+                _Radio(selected: selected),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            'Buat Papan Baru',
-            style: AppTextStyles.displayM,
-          ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _buildOptionCard(String title) {
-    final isSelected = _selectedType == title;
-    
-    final imageMap = {
-      'Aktivitas': 'assets/images/Belajar.png',
-      'Menunggu': 'assets/images/Menunggu.png',
-      'Emosi': 'assets/images/Bahagia.png', 
-    };
+class _Radio extends StatelessWidget {
+  const _Radio({required this.selected});
 
-    return GestureDetector(
-      onTap: () => setState(() => _selectedType = title),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.teal100,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            // Ganti AppColors.teal700 jadi AppColors.teal700 (atau warna gelap andalanmu)
-            color: isSelected ? AppColors.teal700 : AppColors.neutral800.withValues(alpha: 0.2),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Thumbnail Image
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.neutral300,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Image.asset(
-                imageMap[title] ?? 'assets/images/Bahagia.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(width: 24),
-            
-            // Text Title
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.displayM,
-              ),
-            ),
-            
-            // Custom Radio Button
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.teal700 : AppColors.neutral800.withValues(alpha: 0.5),
-                  width: 2,
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.peach500, width: 2),
+      ),
+      child: selected
+          ? Center(
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: const BoxDecoration(
+                  color: AppColors.peach500,
+                  shape: BoxShape.circle,
                 ),
               ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 16, 
-                        height: 16, 
-                        decoration: const BoxDecoration(
-                          color: AppColors.teal700, 
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNextButton() {
-    final isEnabled = _selectedType != null;
-    return GestureDetector(
-      onTap: () {
-        if (!isEnabled) return;
-        
-        // Cek pilihan dan lempar ke route yang sesuai
-        if (_selectedType == 'Aktivitas') {
-          context.push(AppRoutes.createBoardActivity);
-        } else if (_selectedType == 'Menunggu') {
-          context.push(AppRoutes.createWaitingBoard); // <--- Arahkan ke Waiting Board
-        } else if (_selectedType == 'Emosi') {
-          context.push(AppRoutes.createEmotionBoard); // <--- Arahkan ke Emotion Board
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isEnabled ? AppColors.peach500 : AppColors.peach100,
-          borderRadius: BorderRadius.circular(36),
-        ),
-        child: Text(
-          'Selanjutnya',
-          textAlign: TextAlign.center,
-          style: AppTextStyles.displayM.copyWith(color: AppColors.white),
-        ),
-      ),
+            )
+          : null,
     );
   }
 }

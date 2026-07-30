@@ -6,6 +6,7 @@ import '../../../core/navigation/app_routes.dart';
 import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/enums.dart';
@@ -36,14 +37,6 @@ class _BoardPageState extends ConsumerState<BoardPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // One primary action on this screen, which is what a FAB is for.
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppRoutes.createBoard),
-        backgroundColor: AppColors.actionPrimary,
-        foregroundColor: AppColors.onFilled,
-        icon: Icon(Icons.add),
-        label: Text('Buat papan'),
-      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -51,14 +44,26 @@ class _BoardPageState extends ConsumerState<BoardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Title with a "+" affordance on the right, as in the design —
+                // not a floating action button.
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.xl,
                     AppSpacing.md,
-                    AppSpacing.xl,
-                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.md,
                   ),
-                  child: Text('Papan saya', style: AppTextStyles.displayL),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text('Papan saya', style: AppTextStyles.displayL)),
+                      IconButton(
+                        onPressed: () => context.push(AppRoutes.createBoard),
+                        icon: const Icon(Icons.add, size: 30),
+                        color: AppColors.peach500,
+                        tooltip: 'Buat papan',
+                      ),
+                    ],
+                  ),
                 ),
                 _buildFilterChips(),
                 AppSpacing.gapMD,
@@ -113,8 +118,7 @@ class _BoardPageState extends ConsumerState<BoardPage> {
               AppSpacing.xl,
               0,
               AppSpacing.xl,
-              // Clear of the FAB.
-              88,
+              AppSpacing.xxl,
             ),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: columns,
@@ -130,26 +134,74 @@ class _BoardPageState extends ConsumerState<BoardPage> {
     );
   }
 
+  /// Filter pills sitting inside a tinted track, as in the design.
+  ///
+  /// The unselected pills keep the mockup's `teal500` fill but take dark ink
+  /// instead of white — white on `teal500` measures 2.79:1. The selected pill is
+  /// `teal700`, the step the design system's own contrast table asks for.
   Widget _buildFilterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-      child: Row(
-        children: _boardFilters.keys.map((label) {
-          final isSelected = _selectedFilter == label;
-          return Padding(
-            padding: const EdgeInsets.only(right: AppSpacing.xs),
-            child: ChoiceChip(
-              label: Text(label),
-              selected: isSelected,
-              onSelected: (_) => setState(() => _selectedFilter = label),
-              labelStyle: AppTextStyles.bodyS.copyWith(
-                color: isSelected ? AppColors.onFilled : AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        decoration: const BoxDecoration(
+          color: AppColors.teal100,
+          borderRadius: BorderRadius.all(AppRadius.pill),
+        ),
+        child: Row(
+          children: [
+            for (final label in _boardFilters.keys)
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.xxs),
+                child: _FilterPill(
+                  label: label,
+                  selected: _selectedFilter == label,
+                  onTap: () => setState(() => _selectedFilter = label),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: selected ? AppColors.teal700 : AppColors.teal500,
+        borderRadius: const BorderRadius.all(AppRadius.pill),
+        child: InkWell(
+          borderRadius: const BorderRadius.all(AppRadius.pill),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Text(
+              label,
+              style: AppTextStyles.buttonM.copyWith(
+                color: selected ? AppColors.white : AppColors.teal900,
               ),
             ),
-          );
-        }).toList(),
+          ),
+        ),
       ),
     );
   }

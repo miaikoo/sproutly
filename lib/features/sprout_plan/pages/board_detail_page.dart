@@ -11,7 +11,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../models/activity.dart';
 import '../../../models/enums.dart';
 import '../../../models/schedule.dart';
-import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
 import '../../../shared/widgets/activity_image.dart';
 
@@ -128,13 +127,11 @@ class BoardDetailPage extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           const SizedBox(width: 16),
           Expanded(child: Text(schedule.title, style: AppTextStyles.displayM)),

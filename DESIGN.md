@@ -1,9 +1,11 @@
 # Design system Sprout.ly
 
-Aturan visual yang dipakai app ini. Tulis ini karena tokennya sudah ada tapi
-sebagian besar halaman tidak memakainya — 76 `TextStyle` dan 41 warna mentah
-ditulis ulang per halaman, banyak di antaranya beda tipis dari token yang sudah
-ada (`0xFF446860` vs `teal700` `0xFF446B60`).
+Aturan visual yang dipakai app ini, ditranskrip dari `ref/color system.html`,
+`ref/text system.html`, dan mockup di `ref/mock up/`.
+
+Ditulis karena tokennya sudah ada tapi sebagian besar halaman tidak memakainya:
+76 `TextStyle` dan 41 warna mentah ditulis ulang per halaman. Ternyata warna
+mentah itu justru nilai Figma yang benar — tokennya yang melenceng.
 
 ## Siapa yang memakai ini
 
@@ -19,65 +21,66 @@ Konsekuensinya:
   animasi berulang. Perayaan setelah aktivitas selesai muncul sekali lalu
   berhenti.
 - **Target sentuh besar.** Minimum 48dp, diatur di `AppTheme` sekali.
-- **Teks jangan tipis.** Tidak ada tier ink yang lebih terang dari
-  `textSecondary`; apa pun yang lebih pucat gagal diukur.
+- **Teks jangan tipis.** `textSecondary` Figma hanya lolos untuk teks besar;
+  untuk ukuran body pakai `textPrimary`.
 
 ## Warna
 
-Ramp warnanya dari Figma dan **tidak diubah**. Yang diubah adalah aturan
-pasangannya.
+Sumbernya `ref/color system.html` (Figma). Tujuh ramp x sepuluh langkah (50-900).
+Nilai rendah untuk latar & area lembut, nilai tinggi untuk teks & elemen tegas.
 
-**Masalah yang ditemukan:** teks putih dipasang di atas warna level-500.
-Diukur dengan WCAG:
+**Token di kode sebelumnya melenceng dari Figma.** Yang paling merusak:
+`neutral300` ditulis `DCCAD7` padahal Figma `CCDAD7` - transposisi dua huruf
+pertama. Itu sebabnya alas setiap gambar aktivitas berwarna mauve. Bukan
+keputusan desain, murni salah ketik. `teal700` (`446B60` vs `446860`),
+`peach500` (`CA8C6C` vs `C4806C`), dan `neutral50` (`F8F8F4` vs `FAFCFB`) juga
+meleset. Ironisnya, warna mentah yang bertebaran di halaman-halaman justru
+nilai Figma yang benar; tokennya yang drift.
 
-| Pasangan | Rasio | Butuh | Dipakai di |
-|---|---|---|---|
-| putih di `peach500` | 2.74 | 4.5 | semua tombol utama |
-| putih di `teal300` | **1.74** | 4.5 | label bottom nav |
-| putih di `olive500` | 2.43 | 4.5 | papan menunggu |
-| putih di `cream500` | 1.95 | 4.5 | — |
-| `error` = `peach500` | 2.64 | 4.5 | semua pesan gagal simpan |
-| `success` = `olive500` | 2.34 | 3.0 | centang selesai |
+Sekarang seluruh nilai di `app_colors.dart` sama persis dengan Figma.
 
-**Perbaikannya tidak butuh warna baru.** Token level-700 sudah ada dan lulus:
-putih di `teal700` 5.82, `peach700` 6.47, `steel700` 6.44, `olive700` 5.67.
-Jadi identitasnya utuh, pasangannya yang dibetulkan.
+Figma memakai `neutral100` untuk kanvas aplikasi dan `neutral50` untuk kartu di
+atasnya - itu yang dipakai `background` dan `surface`.
 
-Aturannya sekarang:
+### Kontras: tabel Figma sudah tidak sinkron dengan hex-nya
 
-| Kebutuhan | Token | Rasio |
+| Klaim Figma | Kenyataan (diukur) | |
 |---|---|---|
-| Permukaan terisi + teks putih | `actionPrimary` / `actionSecondary` + `onFilled` | 6.47 / 5.82 |
-| Kartu bertint + teks | tint 100-level + `onTint` | ≥ 8.5 |
-| Teks isi di background | `textPrimary` / `textSecondary` | 10.6 / 5.34 |
-| Status sebagai teks | `error` `success` `info` `warning` (700/900) | ≥ 5.47 |
-| Garis yang bermakna | `border` | 3.65 |
-| Garis hias | `divider` | dikecualikan |
+| Sage 500 + White = 4.8:1 "AA OK" | teal500 + putih = **2.79** | tak ada ramp yang menghasilkan 4.8 |
+| Sage 600 + White = 6.2:1 "AA OK" | teal600 = 3.96 - **teal700 = 6.19** | angkanya menunjuk ke 700, bukan 600 |
+| Sage 50 + Neutral 800 = 12.4:1 | sekitar 10.1 | optimistis |
+| Blush 500 + White = 3.2:1 "teks besar" | peach500 = **3.16** | akurat, dan jujur menandai batasnya |
 
-**Jangan** pakai `textSecondary` di atas tint — di `teal100` hasilnya 4.45,
-tepat di bawah ambang. Pakai `onTint`.
+Ramp-nya kelihatan pernah di-restep setelah tabel kontras ditulis, dan tabelnya
+tidak ikut diperbarui.
 
-**`neutral300` diperbaiki.** Sebelumnya `#DCCAD7` — mauve dengan spread 18 di
-tengah ramp yang semuanya kehijauan (spread ≤9), dan itu alas **setiap gambar
-aktivitas**, jadi seluruh ilustrasi anak duduk di atas kartu pink. Sekarang
-`#D6E0DD`, netral sungguhan. Alas gambar punya tokennya sendiri: `imagePlate`.
+**Keputusan:** desainnya menandai semua pasangan itu "AA", jadi niatnya memang
+lolos AA. Karena angka 6.2:1 yang ia tuliskan tepat jatuh di `teal700`, itulah
+yang dipakai untuk permukaan terisi - bukan mengarang standar baru, melainkan
+memenuhi angka yang desainnya sendiri tetapkan. `peach500 + putih` tetap dipakai
+**hanya untuk teks besar**, persis seperti catatan desainnya.
+
+Dua pasangan di export layar hampir pasti bug di file Figma-nya, bukan desain:
+teks `#FAFCFB` di atas `#D2E8E5` dan di atas `#EECABC`, keduanya sekitar
+1.1-1.3:1 alias praktis tak terlihat. Tidak ditiru.
+
+**`textSecondary` Figma (neutral600) hanya 3.29:1.** Untuk teks seukuran body
+pakai `textPrimary`; `neutral600` disimpan untuk label besar dan elemen non-teks.
 
 ## Tipografi
 
-**Nunito tidak pernah ada.** Tidak ada `fonts:` di pubspec, tidak ada
-`assets/fonts/`. Semua 76 `fontFamily: 'Nunito'` jatuh ke Roboto — sistem
-tipografinya cuma dekorasi sejak awal. Nama font hantu itu dihapus daripada
-dibiarkan berbohong.
+Sumbernya `ref/text system.html`. Font primer **Nunito** (display, heading,
+label, button, angka), sekunder **Nunito Sans** (body dan teks panjang).
 
-Kalau mau Nunito sungguhan: taruh `.ttf` di `assets/fonts/`, deklarasikan
-`fonts:` di pubspec, lalu ubah `AppTextStyles.family` menjadi `'Nunito'`.
-Semua style ikut dari satu konstanta itu.
+**Kedua font itu dulu tidak pernah ada di project.** Tidak ada `fonts:` di
+pubspec, tidak ada `assets/fonts/`, jadi 76 deklarasi `fontFamily: 'Nunito'`
+diam-diam jatuh ke Roboto. Sekarang keduanya di-bundle sebagai variable font di
+`assets/fonts/` - satu file mencakup semua weight, dan tidak butuh jaringan saat
+runtime.
 
-Skalanya rasio ~1.2 (register product: langkah rapat, banyak elemen). Pakai
-token, jangan tulis ukuran per halaman.
-
-`caption` 13sp, bukan 12: ini app yang dibaca orang tua satu tangan, dan
-caption membawa informasi nyata (jam, hitungan langkah).
+Skalanya persis spesifikasi Figma: Display XL/L/M, Heading L/M/S, Body L/M/S,
+Label L/M/S, Button L/M/S, Time XL/L, Caption. Pakai token, jangan tulis ukuran
+per halaman.
 
 ## Layout
 
@@ -86,9 +89,11 @@ caption membawa informasi nyata (jam, hitungan langkah).
   yang dilihat anak, jadi ia memakai lebar tablet, bukan kolom sempit.
 - Grid papan pakai lebar tile tetap (~168) lalu wrap, bukan 3 kolom dipaksa
   melebar. Tablet jadi memuat lebih banyak, bukan meregangkan.
-- **Navigasi ikut ukuran** (Material): `BottomNav` di bawah 600dp,
-  `SideNav` (rail) di atasnya. Bottom bar ponsel tidak dikirim apa adanya ke
-  tablet.
+- **Navigasi ikut ukuran**: bar pil `BottomNav` di bawah 600dp, `SideNav`
+  (rail) di atasnya. Bentuknya dari Figma — pil melayang, lingkaran terracotta
+  menandai tab aktif — bukan `NavigationBar` Material. Barnya dibatasi 520dp
+  supaya di tablet tetap terbaca sebagai pil, bukan pita selebar layar.
+  Bar-nya `teal700`, bukan `teal500` seperti mockup: lihat catatan kontras.
 - Aksi utama di luar area scroll. Di runner, tombol dipin sehingga rotasi
   tablet tidak pernah membuatnya tidak terjangkau atau overflow.
 
@@ -115,7 +120,50 @@ apa pun sudah benar.
   network sendiri. Ada 15 tempat yang dulu memanggil `Image.asset` langsung;
   semuanya akan crash begitu ada aktivitas kustom berisi URL.
 - `BoardTile` untuk papan di grid. Dulu ada dua salinan di Home dan Papan yang
-  sudah mulai beda warna dan aspek rasio.
+  sudah mulai beda warna dan aspek rasio. Ilustrasinya duduk di kartu putih di
+  dalam kotak berwarna, seperti di mockup — supaya gambar tetap terbaca apa pun
+  hue jenis papannya.
+
+## Grafik (SproutTrack)
+
+**Palet ini tidak bisa membawa grafik kategorikal.** Diukur, bukan ditebak:
+setiap hue duduk di chroma 0.012–0.092, di bawah ambang 0.10 tempat sebuah
+warna berhenti bekerja sebagai identitas. Jadi tidak ada grafik multi-seri di
+sini — semuanya sequential (satu hue), ordinal, atau diverging. Kebetulan itu
+juga yang diminta syarat "tenang".
+
+**Kosakata diverging** (dipakai untuk suasana hati dan transisi):
+
+| Peran | Token | Kontras vs surface |
+|---|---|---|
+| Kutub tenang / mudah | `teal700` | 5.61 |
+| Titik tengah | `neutral500` (abu sungguhan, spread 2) | 2.47 |
+| Kutub sulit / perlu perhatian | `peach700` | 6.24 |
+
+Dua lengannya divalidasi sebagai ramp ordinal — `teal500→teal700` dan
+`peach500→peach700` dua-duanya **PASS**: lightness monoton, ΔL ≥ 0.06, ujung
+terang lolos ambang kontras. (Level-300 gagal: `teal300` 1.68:1, `peach300`
+1.79:1.)
+
+Titik tengahnya 2.47:1, di bawah ambang 3:1 untuk mark. Itu **hanya legal
+dengan kanal pemulih**, jadi setiap diverging bar di sini wajib membawa label
+segmen yang terlihat **dan** legenda — dan untuk suasana hati, daftar hitungan
+per-mood di bawahnya berfungsi sebagai table view. Jangan hapus salah satunya.
+
+**Kutub sulit sengaja peach, bukan merah alarm.** Ini informasi untuk orang
+tua, bukan vonis atas anaknya.
+
+**Bar magnitude satu warna.** Aktivitas itu kategori nominal — mewarnai tiap
+bar sesuai nilainya akan menghabiskan kanal identitas untuk mengulang apa yang
+sudah dikatakan panjang bar.
+
+Aturan lain yang dipakai: mark tipis, jarak 2px antar segmen (bukan garis tepi),
+label hanya dirender di dalam segmen kalau muat, tinggi kontainer sudah termasuk
+pita sumbu (supaya kartunya tidak menumbuhkan scroll sendiri), angka proporsional
+untuk figur besar dan `tabularFigures` hanya untuk kolom yang berbaris.
+
+Statistiknya ada di `progress_stats.dart` sebagai fungsi murni dengan 20 test —
+angka yang dibaca orang tua dan terapis tidak boleh hanya "kelihatannya benar".
 
 ## Empty state
 

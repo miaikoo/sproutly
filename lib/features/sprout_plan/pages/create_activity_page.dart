@@ -89,13 +89,11 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: const CustomIcon(
-              assetName: 'assets/icons/solar_alt-arrow-left-outline.svg',
-              size: 28,
-              color: AppColors.neutral800,
-            ),
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
+            color: AppColors.textPrimary,
+            tooltip: 'Kembali',
           ),
           const SizedBox(width: 16),
           Text(
@@ -103,19 +101,17 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
             style: AppTextStyles.displayL,
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: _isSaving ? null : _save,
-            child: _isSaving
+          IconButton(
+            onPressed: _isSaving ? null : _save,
+            icon: _isSaving
                 ? const SizedBox(
-                    height: 24,
-                    width: 24,
+                    height: 22,
+                    width: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const CustomIcon(
-                    assetName: 'assets/icons/lucide_save.svg',
-                    size: 28,
-                    color: AppColors.neutral800,
-                  ),
+                : const Icon(Icons.save_outlined),
+            color: AppColors.neutral800,
+            tooltip: 'Simpan papan',
           ),
         ],
       ),

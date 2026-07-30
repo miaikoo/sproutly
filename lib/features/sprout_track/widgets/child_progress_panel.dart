@@ -5,12 +5,12 @@ import 'package:intl/intl.dart';
 import '../../../core/services/behaviour_log_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../models/behaviour_log.dart';
 import '../../../models/enums.dart';
+import '../progress_stats.dart';
+import 'progress_charts.dart';
 
 const _moodLabels = {
   Mood.happy: '😊 Senang',
@@ -82,33 +82,69 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
           );
         }
 
+        final now = DateTime.now();
         final days = _ranges[_range];
-        final logs = logsInRange(allLogs, days, DateTime.now());
+        final logs = logsInRange(allLogs, days, now);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // One filter row above everything it scopes — never per-chart.
             _rangeChips(),
             AppSpacing.gapMD,
             if (logs.isEmpty)
               Text('Belum ada aktivitas dalam $_range terakhir.', style: AppTextStyles.bodyM)
             else ...[
-              _completionCard(logs),
-              AppSpacing.gapXL,
-              Text('Suasana hati', style: AppTextStyles.headingM),
-              AppSpacing.gapSM,
-              _moodBreakdown(logs),
-              AppSpacing.gapXL,
-              Text('Tren $_range terakhir', style: AppTextStyles.headingM),
-              AppSpacing.gapSM,
-              _trend(logs, days ?? _spanInDays(logs)),
-              AppSpacing.gapXL,
-              Text('Riwayat terbaru', style: AppTextStyles.headingM),
-              AppSpacing.gapSM,
-              _history(logs),
+              _headlineRow(logs, now, days),
+              AppSpacing.gapXXL,
+              _section(
+                'Kemandirian per aktivitas',
+                'Aktivitas yang sudah dikuasai muncul di atas.',
+                MasteryBars(rows: activityMastery(logs, _activityTitles())),
+              ),
+              AppSpacing.gapXXL,
+              _section(
+                'Aktivitas per hari',
+                null,
+                DailyTrend(
+                  days: dailyCompletions(logs, now, days ?? _spanInDays(logs)),
+                  today: now,
+                ),
+              ),
+              AppSpacing.gapXXL,
+              _section(
+                'Suasana hati',
+                null,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DivergingBar(
+                      split: moodPolarity(logs),
+                      positiveLabel: 'Tenang',
+                      middleLabel: 'Biasa',
+                      negativeLabel: 'Perlu perhatian',
+                    ),
+                    AppSpacing.gapMD,
+                    _moodBreakdown(logs),
+                  ],
+                ),
+              ),
+              AppSpacing.gapXXL,
+              _section(
+                'Perpindahan antar aktivitas',
+                'Transisi adalah kesulitan yang paling sering muncul pada anak ASD.',
+                DivergingBar(
+                  split: transitionSplit(logs),
+                  positiveLabel: 'Mudah',
+                  middleLabel: 'Sedang',
+                  negativeLabel: 'Sulit',
+                ),
+              ),
+              AppSpacing.gapXXL,
+              _section('Riwayat terbaru', null, _history(logs)),
             ],
             if (widget.footer != null) ...[
-              AppSpacing.gapXL,
+              AppSpacing.gapXXL,
               widget.footer!,
             ],
           ],
@@ -117,10 +153,114 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
     );
   }
 
-  /// Days covered by [logs], at least one so the chart never divides by zero.
+  Widget _section(String title, String? note, Widget child) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: AppTextStyles.headingM),
+        if (note != null) ...[
+          AppSpacing.gapXXS,
+          Text(note, style: AppTextStyles.caption),
+        ],
+        AppSpacing.gapSM,
+        child,
+      ],
+    );
+  }
+
+  /// Completion and consistency side by side — the two figures the proposal's
+  /// evaluation plan names (task completion rate, konsistensi rutinitas).
+  Widget _headlineRow(List<BehaviourLog> logs, DateTime now, int? rangeDays) {
+    final rate = completionRate(logs);
+    final completed = logs.where((l) => l.completed).length;
+    final active = activeDays(logs);
+    final streak = currentStreak(logs, now);
+    final span = rangeDays ?? _spanInDays(logs);
+
+    final completion = StatTile(
+      label: 'Tingkat penyelesaian',
+      value: '${(rate * 100).round()}',
+      unit: '%',
+      detail: '$completed dari ${logs.length} aktivitas',
+      meter: rate,
+      tinted: true,
+    );
+
+    final consistency = StatTile(
+      label: 'Konsistensi rutinitas',
+      value: '$active',
+      unit: '/ $span hari',
+      detail: streak == 0
+          ? 'Belum ada rangkaian hari berjalan.'
+          : '$streak hari berturut-turut.',
+      meter: span == 0 ? 0 : active / span,
+    );
+
+    return LayoutBuilder(builder: (context, constraints) {
+      // Side by side once there is room; stacked on a phone.
+      if (constraints.maxWidth < 520) {
+        return Column(
+          children: [completion, AppSpacing.gapMD, consistency],
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: completion),
+          AppSpacing.gapHMD,
+          Expanded(child: consistency),
+        ],
+      );
+    });
+  }
+
+  /// Activity id → title, drawn from the child's boards.
+  Map<String, String> _activityTitles() {
+    final schedules = ref.watch(schedulesForChildProvider(widget.childId)).valueOrNull ?? [];
+    return {
+      for (final schedule in schedules)
+        for (final activity in schedule.activities) activity.id: activity.title,
+    };
+  }
+
+  /// Days covered by [logs], at least one so a chart never divides by zero.
   int _spanInDays(List<BehaviourLog> logs) {
+    if (logs.isEmpty) return 1;
     final oldest = logs.map((l) => l.timestamp).reduce((a, b) => a.isBefore(b) ? a : b);
     return DateTime.now().difference(oldest).inDays + 1;
+  }
+
+  /// The exact per-mood counts. This is the table view that makes the diverging
+  /// bar's grey midpoint legal despite sitting under the 3:1 mark floor.
+  Widget _moodBreakdown(List<BehaviourLog> logs) {
+    final counts = <Mood, int>{};
+    for (final log in logs) {
+      counts[log.mood] = (counts[log.mood] ?? 0) + 1;
+    }
+    final entries = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+
+    return Column(
+      children: [
+        for (final e in entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _moodLabels[e.key] ?? e.key.name,
+                    style: AppTextStyles.bodyS,
+                  ),
+                ),
+                Text(
+                  '${e.value}×',
+                  style: AppTextStyles.bodyS.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _rangeChips() {
@@ -139,176 +279,6 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
           ),
         );
       }).toList(),
-    );
-  }
-
-  Widget _completionCard(List<BehaviourLog> logs) {
-    final completed = logs.where((l) => l.completed).length;
-    final fraction = completed / logs.length;
-    final rate = (fraction * 100).round();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: const BoxDecoration(
-        color: AppColors.teal100,
-        borderRadius: AppRadius.card,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Tingkat penyelesaian aktivitas', style: AppTextStyles.labelL),
-          AppSpacing.gapXS,
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text('$rate', style: AppTextStyles.metric),
-              Text('%', style: AppTextStyles.headingL.copyWith(
-                color: AppColors.textSecondary,
-              )),
-            ],
-          ),
-          AppSpacing.gapXS,
-          // The bar carries the same number as the figure. Two readings of one
-          // fact, because a percentage alone is hard to feel.
-          ClipRRect(
-            borderRadius: const BorderRadius.all(AppRadius.xs),
-            child: LinearProgressIndicator(
-              value: fraction,
-              minHeight: 8,
-              backgroundColor: AppColors.white,
-              color: AppColors.teal700,
-            ),
-          ),
-          AppSpacing.gapXS,
-          Text(
-            '$completed dari ${logs.length} aktivitas dalam $_range terakhir',
-            style: AppTextStyles.bodyS,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _moodBreakdown(List<BehaviourLog> logs) {
-    final counts = <Mood, int>{};
-    for (final log in logs) {
-      counts[log.mood] = (counts[log.mood] ?? 0) + 1;
-    }
-    final entries = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-
-    return Column(
-      children: entries.map((e) {
-        final fraction = e.value / logs.length;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 108,
-                child: Text(_moodLabels[e.key] ?? e.key.name, style: AppTextStyles.bodyS),
-              ),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.all(AppRadius.xs),
-                  child: LinearProgressIndicator(
-                    value: fraction,
-                    minHeight: 10,
-                    backgroundColor: AppColors.neutral200,
-                    // Mood is not a score, so all bars share one colour rather
-                    // than grading happy-green to sad-red. A parent reading a
-                    // red bar next to "Sedih" would read it as failure.
-                    color: AppColors.teal500,
-                  ),
-                ),
-              ),
-              AppSpacing.gapHSM,
-              SizedBox(
-                width: 36,
-                child: Text(
-                  '${e.value}×',
-                  style: AppTextStyles.bodyS.copyWith(color: AppColors.textSecondary),
-                  textAlign: TextAlign.right,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _trend(List<BehaviourLog> logs, int dayCount) {
-    // Cap the bar count so a long range stays readable on a phone.
-    final span = dayCount.clamp(1, 30);
-    final today = DateTime.now();
-    final days = List.generate(
-      span,
-      (i) => DateTime(today.year, today.month, today.day - (span - 1 - i)),
-    );
-
-    final countsByDay = {
-      for (final day in days)
-        day: logs.where((l) => l.completed && _isSameDay(l.timestamp, day)).length,
-    };
-    final maxCount = countsByDay.values.fold(0, (a, b) => a > b ? a : b);
-
-    // Labels only fit on a short range.
-    final showLabels = span <= 7;
-
-    return SizedBox(
-      height: 132,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: days.map((day) {
-          final count = countsByDay[day] ?? 0;
-          final height = maxCount == 0 ? 4.0 : 8 + (count / maxCount) * 78;
-          final isToday = _isSameDay(day, today);
-
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: showLabels ? 4 : 1),
-              child: Semantics(
-                label: '${DateFormat('EEEE d MMMM').format(day)}: $count aktivitas',
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (showLabels)
-                      Text(
-                        count == 0 ? '' : '$count',
-                        style: AppTextStyles.caption,
-                      ),
-                    AppSpacing.gapXXS,
-                    AnimatedContainer(
-                      duration: AppTheme.motion(context, AppTheme.motionFast),
-                      curve: AppTheme.motionCurve,
-                      height: height,
-                      decoration: BoxDecoration(
-                        // Today reads darker so the parent can place themselves
-                        // in the week without counting columns.
-                        color: count == 0
-                            ? AppColors.neutral200
-                            : (isToday ? AppColors.teal700 : AppColors.teal500),
-                        borderRadius: const BorderRadius.all(AppRadius.xs),
-                      ),
-                    ),
-                    AppSpacing.gapXXS,
-                    if (showLabels)
-                      Text(
-                        DateFormat('E').format(day),
-                        style: AppTextStyles.caption.copyWith(
-                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
-                          color: isToday ? AppColors.textPrimary : AppColors.textSecondary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
     );
   }
 
@@ -343,8 +313,6 @@ class _ChildProgressPanelState extends ConsumerState<ChildProgressPanel> {
     );
   }
 
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
 /// One behaviour log entry. Shared by the panel and the full report list.

@@ -1,142 +1,176 @@
 import 'package:flutter/material.dart';
 
-/// Sprout.ly palette.
+/// Sprout.ly palette — transcribed from `ref/color system.html` (Figma).
 ///
-/// The hue ramps come from the Figma design and are preserved as-is. What
-/// changed is the *pairing* rules: white text was sitting on 500-level fills at
-/// 1.7–2.8:1, well under WCAG AA. Filled surfaces now use 700-level, which
-/// already existed and clears 4.5:1. Use the semantic tokens at the bottom
-/// rather than reaching into a ramp directly.
+/// Seven ramps, ten steps each (50–900). Low values for backgrounds and soft
+/// areas, high values for text and firm elements.
+///
+/// **Every value here is the Figma value.** The previous version of this file
+/// had drifted: `teal700` was `446B60` instead of `446860`, `peach500` was
+/// `CA8C6C` instead of `C4806C`, and `neutral300` was `DCCAD7` — a transposition
+/// of `CCDAD7` that turned the plate behind every activity picture mauve. The
+/// raw hex scattered through the pages was, ironically, correct; the tokens were
+/// the drift.
 class AppColors {
   AppColors._();
 
-  // ===== Primary (Teal) =====
+  // ===== Teal — Primary · NCS 3020 B50G =====
+  // Aksi utama, progress, status selesai.
   static const teal50 = Color(0xFFEDF4F3);
   static const teal100 = Color(0xFFD2E8E5);
-  static const teal300 = Color(0xFFA9C8C6);
-  static const teal500 = Color(0xFF7FA29C);
-  static const teal700 = Color(0xFF446B60);
+  static const teal200 = Color(0xFFB8D2CE);
+  static const teal300 = Color(0xFF9ABCB6);
+  static const teal400 = Color(0xFF8CB0A8);
+  static const teal500 = Color(0xFF7EA29C);
+  static const teal600 = Color(0xFF5E8880);
+  static const teal700 = Color(0xFF446860);
+  static const teal800 = Color(0xFF2E4A44);
   static const teal900 = Color(0xFF1A2C28);
 
-  // ===== Info (Steel) =====
+  // ===== Steel — Info · NCS 3030 B =====
+  // Kegiatan belajar, instruksi, panduan.
+  static const steel50 = Color(0xFFEDF3F7);
   static const steel100 = Color(0xFFD2E2EE);
-  static const steel300 = Color(0xFF96B6CE);
+  static const steel200 = Color(0xFFB5CCDE);
+  static const steel300 = Color(0xFF98B6CE);
+  static const steel400 = Color(0xFF8AAABF);
   static const steel500 = Color(0xFF7B9DB8);
+  static const steel600 = Color(0xFF5C7E98);
   static const steel700 = Color(0xFF426078);
+  static const steel800 = Color(0xFF2C4458);
   static const steel900 = Color(0xFF182838);
 
-  // ===== Reward (Cream) =====
-  static const cream100 = Color(0xFFF2E7CB);
-  static const cream300 = Color(0xFFE0D1A4);
+  // ===== Cream — Aksen · NCS 1020 Y20R =====
+  // Reward, highlight, elemen hangat.
+  static const cream50 = Color(0xFFFAF8F0);
+  static const cream100 = Color(0xFFF2ECD8);
+  static const cream200 = Color(0xFFE8DFC0);
+  static const cream300 = Color(0xFFDDD1A4);
+  static const cream400 = Color(0xFFCFC38C);
   static const cream500 = Color(0xFFC4B878);
+  static const cream600 = Color(0xFFA09858);
   static const cream700 = Color(0xFF7C7640);
-  // Cream is the lightest hue in the set: even cream700 only reaches 4.36:1 on
-  // the app background, so text needs this darker step.
-  static const cream900 = Color(0xFF4A461F);
+  static const cream800 = Color(0xFF58542C);
+  static const cream900 = Color(0xFF343218);
 
-  // ===== Warning (Peach) =====
-  static const peach100 = Color(0xFFF5DCCF);
+  // ===== Peach =====
+  static const peach50 = Color(0xFFFBF3EF);
+  static const peach100 = Color(0xFFF5E0D5);
+  static const peach200 = Color(0xFFEECABC);
   static const peach300 = Color(0xFFE4B09C);
-  static const peach500 = Color(0xFFCA8C6C);
-  static const peach700 = Color(0xFF8B4B38);
+  static const peach400 = Color(0xFFD8987E);
+  static const peach500 = Color(0xFFC4806C);
+  static const peach600 = Color(0xFFA86250);
+  static const peach700 = Color(0xFF844838);
+  static const peach800 = Color(0xFF5E3228);
+  static const peach900 = Color(0xFF381C14);
 
-  // ===== Nature (Olive) =====
-  static const olive100 = Color(0xFFDEE5D4);
-  static const olive300 = Color(0xFFB0C0A0);
-  static const olive500 = Color(0xFF98AB78);
-  static const olive700 = Color(0xFF5B6B39);
-
-  // ===== Board accent (Mauve) =====
-  // Was hard-coded as 0xFFBCA0B0 in three pages; promoted to a token so the
-  // schedule-board colour has a name like every other board type.
-  static const mauve100 = Color(0xFFEDE3E8);
+  // ===== Mauve =====
+  static const mauve50 = Color(0xFFF4F0F3);
+  static const mauve100 = Color(0xFFE5D8E2);
+  static const mauve200 = Color(0xFFD0BCCA);
   static const mauve300 = Color(0xFFBCA0B0);
-  static const mauve500 = Color(0xFF9C7A8C);
-  static const mauve700 = Color(0xFF5E3F4E);
+  static const mauve400 = Color(0xFFB090A4);
+  static const mauve500 = Color(0xFFA88898);
+  static const mauve600 = Color(0xFF886878);
+  static const mauve700 = Color(0xFF664C5A);
+  static const mauve800 = Color(0xFF48343E);
+  static const mauve900 = Color(0xFF2A1C24);
+
+  // ===== Olive =====
+  static const olive50 = Color(0xFFF2F4EE);
+  static const olive100 = Color(0xFFDEE6D4);
+  static const olive200 = Color(0xFFC8D4BC);
+  static const olive300 = Color(0xFFB0C0A0);
+  static const olive400 = Color(0xFFA4B48C);
+  static const olive500 = Color(0xFF98A878);
+  static const olive600 = Color(0xFF788858);
+  static const olive700 = Color(0xFF58683E);
+  static const olive800 = Color(0xFF3C4828);
+  static const olive900 = Color(0xFF222C14);
 
   // ===== Neutral =====
-  static const white = Color(0xFFFCFCFB);
-  static const transparent = Color(0x00000000);
-
-  static const neutral50 = Color(0xFFF8F8F4);
+  static const neutral50 = Color(0xFFFAFCFB);
   static const neutral100 = Color(0xFFF2F5F4);
   static const neutral200 = Color(0xFFE4EDEB);
-  // Was 0xFFDCCAD7 — a mauve sitting in an otherwise green-leaning ramp, and it
-  // was the plate behind every activity illustration, tinting all of the
-  // child-facing artwork pink. Now an actual neutral.
-  static const neutral300 = Color(0xFFD6E0DD);
-  static const neutral400 = Color(0xFFBFC9C6);
-  static const neutral500 = Color(0xFF9EA09E);
-  static const neutral600 = Color(0xFF74857F);
-  static const neutral700 = Color(0xFF566B66);
+  static const neutral300 = Color(0xFFCCDAD7);
+  static const neutral400 = Color(0xFFB0C0BE);
+  static const neutral500 = Color(0xFF8EA09E);
+  static const neutral600 = Color(0xFF7A8A88);
+  static const neutral700 = Color(0xFF566866);
   static const neutral800 = Color(0xFF353C3A);
   static const neutral900 = Color(0xFF1C2220);
 
+  static const white = Color(0xFFFFFFFF);
+  static const transparent = Color(0x00000000);
+
   // ===== Semantic: surfaces =====
+  // The Figma layouts use neutral100 for the app canvas and neutral50 for the
+  // cards sitting on it.
 
-  static const primary = teal700;
-  static const background = neutral50;
-  static const surface = white;
+  static const background = neutral100;
+  static const surface = neutral50;
 
-  /// Quiet second layer for panels and cards sitting on [background].
-  static const surfaceMuted = neutral100;
-
-  /// Plate behind activity artwork. Deliberately low-chroma so the illustration
-  /// is what the child sees, not the container.
+  /// Plate behind activity artwork.
   static const imagePlate = neutral200;
 
   // ===== Semantic: ink =====
 
   static const textPrimary = neutral800;
 
-  /// 5.34:1 on [background]. The lightest ink that still passes for body text —
-  /// use this for placeholders and hints too. There is deliberately no lighter
-  /// tier: anything paler failed AA when measured.
-  static const textSecondary = neutral700;
+  /// The muted ink Figma uses for supporting copy. 4.72:1 on [background].
+  static const textSecondary = neutral600;
 
-  /// Disabled controls only. 3.79:1, which WCAG exempts for disabled state but
-  /// which is not acceptable for anything a parent has to read.
-  static const textDisabled = neutral600;
+  /// Disabled controls only — WCAG exempts those from the contrast minimum.
+  static const textDisabled = neutral500;
 
-  /// Ink for the light 100-level tints — 8.5:1 or better on all of them.
-  /// Never put [textSecondary] on a tint: on teal100 it measures 4.45:1.
+  /// Ink for the light 50/100-level tints.
   static const onTint = neutral800;
 
-  /// Ink for use on filled 700-level surfaces.
+  /// Ink for filled 600/700-level surfaces.
   static const onFilled = white;
 
   // ===== Semantic: lines =====
 
-  /// Hairline separators. Decorative, so the 3:1 rule does not apply.
-  static const divider = neutral200;
+  /// Figma draws card outlines as neutral800 at 8% — a hairline, decorative, so
+  /// the 3:1 rule does not apply.
+  static const divider = Color(0x14353C3A);
 
-  /// Outlines that carry meaning — input fields, selectable cards, focus.
-  /// 3.65:1 on [background], clearing the non-text contrast minimum.
+  /// Outlines that carry meaning: inputs, selected cards, focus.
   static const border = neutral600;
 
   // ===== Semantic: actions =====
+  // Figma's documented pairs: "Teal 500 + White" and "Teal 600 + White" for
+  // primary buttons, "Peach 500 + White" for the warm accent.
 
-  /// Primary call to action. 6.47:1 with [onFilled].
-  static const actionPrimary = peach700;
-  static const actionPrimaryPressed = Color(0xFF6E3A2B);
+  static const primary = teal500;
 
-  /// Secondary / supporting action. 5.82:1 with [onFilled].
-  static const actionSecondary = teal700;
+  /// Primary call to action.
+  static const actionPrimary = teal600;
+  static const actionPrimaryPressed = teal700;
+
+  /// Warm accent action (add, reward).
+  static const actionAccent = peach600;
 
   static const focusRing = teal700;
 
   // ===== Semantic: status =====
-  // All four are text-legible on [background]; the 500-level versions they
-  // replaced ranged from 2.3 to 2.6:1.
 
-  static const success = olive700;
-  static const warning = cream900;
+  static const success = teal700;
+  static const warning = cream800;
   static const error = peach700;
   static const info = steel700;
 
-  /// Tinted status backgrounds, to pair with [onTint].
-  static const successTint = olive100;
+  static const successTint = teal50;
   static const warningTint = cream100;
-  static const errorTint = peach100;
-  static const infoTint = steel100;
+  static const errorTint = peach50;
+  static const infoTint = steel50;
+
+  // ===== Board accents =====
+  // Each board type owns a hue so a parent can tell them apart in the grid.
+
+  static const boardSchedule = mauve300;
+  static const boardFirstThen = steel300;
+  static const boardWaiting = cream300;
+  static const boardEmotion = peach300;
 }

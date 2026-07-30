@@ -367,22 +367,26 @@ class _CurrentTaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.teal100,
-      borderRadius: AppRadius.card,
+      color: AppColors.teal50,
+      borderRadius: AppRadius.tile,
+      shape: const RoundedRectangleBorder(
+        borderRadius: AppRadius.tile,
+        side: BorderSide(color: AppColors.teal200),
+      ),
       child: InkWell(
-        borderRadius: AppRadius.card,
+        borderRadius: AppRadius.tile,
         onTap: () => context.push(AppRoutes.activityPath(scheduleId, activity.id)),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               Container(
-                width: 76,
-                height: 76,
+                width: 84,
+                height: 84,
                 padding: const EdgeInsets.all(AppSpacing.xs),
                 decoration: const BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: AppRadius.button,
+                  borderRadius: AppRadius.card,
                 ),
                 child: ActivityImage(activity.icon),
               ),
@@ -395,7 +399,7 @@ class _CurrentTaskCard extends StatelessWidget {
                       activity.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.headingL,
+                      style: AppTextStyles.displayM,
                     ),
                     AppSpacing.gapXXS,
                     Text(

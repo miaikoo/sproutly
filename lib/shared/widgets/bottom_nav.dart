@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/navigation/app_routes.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/app_theme.dart';
 
-/// The three top-level destinations.
 class _Destination {
   const _Destination(this.route, this.label, this.asset);
 
@@ -26,26 +29,13 @@ int _selectedIndex(BuildContext context) {
   return index < 0 ? 0 : index;
 }
 
-void _go(BuildContext context, int index) => context.go(_destinations[index].route);
-
-Widget _icon(String asset, {required bool selected}) {
-  return SvgPicture.asset(
-    asset,
-    width: 26,
-    height: 26,
-    colorFilter: ColorFilter.mode(
-      selected ? AppColors.teal900 : AppColors.textSecondary,
-      BlendMode.srcIn,
-    ),
-  );
-}
-
-/// Bottom navigation for compact widths (phones, tablet portrait).
+/// The floating pill navigation from the Figma design: a rounded teal bar with
+/// a filled circle marking the active destination.
 ///
-/// This replaced a hand-rolled pill container that put white labels on
-/// `teal300` — 1.74:1, the worst contrast in the app. Material's NavigationBar
-/// carries the selected state with a tinted indicator instead of colour alone,
-/// and gives 48dp targets for free.
+/// The bar is `teal700` rather than the mockup's `teal500`. The design system's
+/// own contrast table asks for 6.2:1 on its primary filled pair, and `teal700`
+/// is the step that actually delivers it (6.19:1) — `teal500` measures 2.79:1,
+/// which would leave these labels unreadable.
 class BottomNav extends StatelessWidget {
   const BottomNav({super.key});
 
@@ -53,30 +43,119 @@ class BottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = _selectedIndex(context);
 
-    return NavigationBar(
-      selectedIndex: selected,
-      onDestinationSelected: (index) => _go(context, index),
-      // Labels stay visible: an icon-only bar makes a parent guess, and this is
-      // not an app anyone uses often enough to memorise glyphs.
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: [
-        for (final d in _destinations)
-          NavigationDestination(
-            icon: _icon(d.asset, selected: false),
-            selectedIcon: _icon(d.asset, selected: true),
-            label: d.label,
-            tooltip: d.label,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.xs,
+          AppSpacing.md,
+          AppSpacing.sm,
+        ),
+        child: Center(
+          // Capped so the bar stays a pill on a tablet instead of stretching
+          // into a full-width band.
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: AppColors.teal700,
+                borderRadius: BorderRadius.all(AppRadius.pill),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                children: [
+                  for (var i = 0; i < _destinations.length; i++)
+                    Expanded(
+                      child: _NavItem(
+                        destination: _destinations[i],
+                        selected: i == selected,
+                        onTap: () => context.go(_destinations[i].route),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-      ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.destination,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _Destination destination;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: destination.label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: const BorderRadius.all(AppRadius.pill),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: AppTheme.motion(context, AppTheme.motionFast),
+                curve: AppTheme.motionCurve,
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  // The terracotta disc from the mockup marks the active tab.
+                  // Selection is carried by the disc, not by colour alone.
+                  color: selected ? AppColors.peach500 : AppColors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                child: SvgPicture.asset(
+                  destination.asset,
+                  width: 24,
+                  height: 24,
+                  colorFilter: ColorFilter.mode(
+                    selected ? AppColors.white : AppColors.teal100,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+              AppSpacing.gapXXS,
+              Text(
+                destination.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.labelM.copyWith(
+                  color: AppColors.white,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
 /// Side navigation for expanded widths (tablet landscape).
 ///
-/// Material asks for a rail rather than a stretched bottom bar once there is
-/// room, and it keeps the vertical space for the content — which matters on the
-/// runner, where the child is looking at the activity picture.
+/// Keeps the pill vocabulary — same disc, same colours — turned on its side, so
+/// a tablet gets its vertical space back without the app looking like a
+/// different product in landscape.
 class SideNav extends StatelessWidget {
   const SideNav({super.key});
 
@@ -84,20 +163,33 @@ class SideNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = _selectedIndex(context);
 
-    return NavigationRail(
-      selectedIndex: selected,
-      onDestinationSelected: (index) => _go(context, index),
-      labelType: NavigationRailLabelType.all,
-      minWidth: 88,
-      destinations: [
-        for (final d in _destinations)
-          NavigationRailDestination(
-            icon: _icon(d.asset, selected: false),
-            selectedIcon: _icon(d.asset, selected: true),
-            label: Text(d.label),
-            padding: const EdgeInsets.symmetric(vertical: 4),
+    return SafeArea(
+      right: false,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Container(
+          width: 96,
+          decoration: const BoxDecoration(
+            color: AppColors.teal700,
+            borderRadius: BorderRadius.all(AppRadius.xxl),
           ),
-      ],
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < _destinations.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                  child: _NavItem(
+                    destination: _destinations[i],
+                    selected: i == selected,
+                    onTap: () => context.go(_destinations[i].route),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
