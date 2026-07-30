@@ -18,6 +18,11 @@ Schedule _$ScheduleFromJson(Map<String, dynamic> json) => Schedule(
       $enumDecodeNullable(_$BoardTypeEnumMap, json['type']) ??
       BoardType.schedule,
   waitMinutes: (json['waitMinutes'] as num?)?.toInt(),
+  thenActivityIds:
+      (json['thenActivityIds'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$ScheduleToJson(Schedule instance) => <String, dynamic>{
@@ -28,6 +33,7 @@ Map<String, dynamic> _$ScheduleToJson(Schedule instance) => <String, dynamic>{
   'type': _$BoardTypeEnumMap[instance.type]!,
   'activities': instance.activities.map((e) => e.toJson()).toList(),
   'waitMinutes': instance.waitMinutes,
+  'thenActivityIds': instance.thenActivityIds,
 };
 
 const _$BoardTypeEnumMap = {

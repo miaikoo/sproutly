@@ -100,6 +100,14 @@ class AuthService {
 
   Future<void> logout() => _auth.signOut();
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on fb.FirebaseAuthException catch (e) {
+      throw AuthException(_messageFor(e));
+    }
+  }
+
   String _messageFor(fb.FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':

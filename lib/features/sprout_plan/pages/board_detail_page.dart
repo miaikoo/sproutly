@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/data/activity_catalog.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/activity.dart';
@@ -85,15 +88,20 @@ class BoardDetailPage extends ConsumerWidget {
         Expanded(
           child: ListView.separated(
             padding: AppSpacing.pagePadding,
-            itemCount: activities.length,
+            itemCount: activities.length + (schedule.thenActivityIds.isEmpty ? 0 : 1),
             separatorBuilder: (_, _) => AppSpacing.gapMD,
-            itemBuilder: (context, index) => _ActivityRow(
-              scheduleId: schedule.id,
-              activity: activities[index],
-              showTime: isSchedule,
-              showCompletion: schedule.type == BoardType.schedule ||
-                  schedule.type == BoardType.firstThen,
-            ),
+            itemBuilder: (context, index) {
+              if (index == activities.length) {
+                return _ThenSection(childId: schedule.childId, activityIds: schedule.thenActivityIds);
+              }
+              return _ActivityRow(
+                scheduleId: schedule.id,
+                activity: activities[index],
+                showTime: isSchedule,
+                showCompletion: schedule.type == BoardType.schedule ||
+                    schedule.type == BoardType.firstThen,
+              );
+            },
           ),
         ),
       ],
@@ -243,6 +251,79 @@ class _ActivityRow extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push(AppRoutes.activityPath(scheduleId, activity.id)),
       child: row,
+    );
+  }
+}
+
+/// The "kemudian aku bisa melakukan..." reward choices set when the board was
+/// built — a preview of what the child gets offered once the routine is done.
+class _ThenSection extends ConsumerWidget {
+  const _ThenSection({required this.childId, required this.activityIds});
+
+  final String childId;
+  final List<String> activityIds;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final custom = ref.watch(childByIdProvider(childId)).valueOrNull?.customActivities ?? const [];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.steel500,
+        borderRadius: AppRadius.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Setelah selesai, kamu bisa pilih...',
+            style: AppTextStyles.headingS.copyWith(color: AppColors.white),
+          ),
+          AppSpacing.gapSM,
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final id in activityIds)
+                _ThenCard(item: ActivityCatalog.byId(id, custom)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThenCard extends StatelessWidget {
+  const _ThenCard({required this.item});
+
+  final ActivityCatalogItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 96,
+      padding: const EdgeInsets.all(8),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadius.card,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: 56, child: ActivityImage(item.image)),
+          AppSpacing.gapXXS,
+          Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption,
+          ),
+        ],
+      ),
     );
   }
 }

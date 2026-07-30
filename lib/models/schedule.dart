@@ -27,6 +27,13 @@ class Schedule {
   /// [BoardType.waiting]; null everywhere else.
   final int? waitMinutes;
 
+  /// Catalog ids the child can choose between after finishing a
+  /// [BoardType.schedule] board — the "kemudian aku bisa melakukan..." reward
+  /// step. Zero, one, or two entries; empty everywhere else and on boards
+  /// created before this existed.
+  @JsonKey(defaultValue: <String>[])
+  final List<String> thenActivityIds;
+
   const Schedule({
     required this.id,
     required this.childId,
@@ -35,6 +42,7 @@ class Schedule {
     required this.activities,
     this.type = BoardType.schedule,
     this.waitMinutes,
+    this.thenActivityIds = const [],
   });
 
   Schedule copyWith({
@@ -42,6 +50,7 @@ class Schedule {
     DateTime? date,
     List<Activity>? activities,
     int? waitMinutes,
+    List<String>? thenActivityIds,
   }) {
     return Schedule(
       id: id,
@@ -51,6 +60,7 @@ class Schedule {
       type: type,
       activities: activities ?? this.activities,
       waitMinutes: waitMinutes ?? this.waitMinutes,
+      thenActivityIds: thenActivityIds ?? this.thenActivityIds,
     );
   }
 

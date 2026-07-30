@@ -53,6 +53,7 @@ class BottomNav extends StatelessWidget {
           AppSpacing.sm,
         ),
         child: Center(
+          heightFactor: 1,
           // Capped so the bar stays a pill on a tablet instead of stretching
           // into a full-width band.
           child: ConstrainedBox(
@@ -143,49 +144,6 @@ class _NavItem extends StatelessWidget {
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Side navigation for expanded widths (tablet landscape).
-///
-/// Keeps the pill vocabulary — same disc, same colours — turned on its side, so
-/// a tablet gets its vertical space back without the app looking like a
-/// different product in landscape.
-class SideNav extends StatelessWidget {
-  const SideNav({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final selected = _selectedIndex(context);
-
-    return SafeArea(
-      right: false,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Container(
-          width: 96,
-          decoration: const BoxDecoration(
-            color: AppColors.teal700,
-            borderRadius: BorderRadius.all(AppRadius.xxl),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var i = 0; i < _destinations.length; i++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                  child: _NavItem(
-                    destination: _destinations[i],
-                    selected: i == selected,
-                    onTap: () => context.go(_destinations[i].route),
-                  ),
-                ),
             ],
           ),
         ),

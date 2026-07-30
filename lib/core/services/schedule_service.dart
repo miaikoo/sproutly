@@ -49,6 +49,7 @@ class ScheduleService {
     required List<({String catalogId, DateTime start})> picks,
     List<ActivityCatalogItem> customActivities = const [],
     int? waitMinutes,
+    List<String> thenActivityIds = const [],
   }) async {
     final id = newScheduleId();
     final schedule = Schedule(
@@ -58,6 +59,7 @@ class ScheduleService {
       date: DateTime.now(),
       type: type,
       waitMinutes: waitMinutes,
+      thenActivityIds: thenActivityIds,
       activities: [
         for (var i = 0; i < picks.length; i++)
           () {

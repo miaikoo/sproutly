@@ -368,7 +368,6 @@ class _CurrentTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.teal50,
-      borderRadius: AppRadius.tile,
       shape: const RoundedRectangleBorder(
         borderRadius: AppRadius.tile,
         side: BorderSide(color: AppColors.teal200),

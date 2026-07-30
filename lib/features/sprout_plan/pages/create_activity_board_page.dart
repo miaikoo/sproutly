@@ -84,8 +84,8 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
   Widget _buildOptionCard(String title) {
     final isSelected = _selectedSubType == title;
     final imageMap = {
-      'Jadwal': 'assets/images/Sikat Gigi.png',
-      'First-Then': 'assets/images/Mandi.png',
+      'Jadwal': 'assets/icons/jadwal.png',
+      'First-Then': 'assets/icons/first then.png',
     };
     return GestureDetector(
       onTap: () => setState(() => _selectedSubType = title),
@@ -110,7 +110,7 @@ class _CreateActivityBoardPageState extends State<CreateActivityBoardPage> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Image.asset(
-                imageMap[title] ?? 'assets/images/Sikat Gigi.png',
+                imageMap[title] ?? 'assets/icons/jadwal.png',
                 fit: BoxFit.contain,
               ),
             ),

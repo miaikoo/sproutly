@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/pages/landing_page.dart';
 import '../../features/auth/pages/login_page.dart';
 import '../../features/auth/pages/register_page.dart';
 
@@ -53,26 +52,22 @@ class GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
-const _publicRoutes = {AppRoutes.landing, AppRoutes.login, AppRoutes.register};
+const _publicRoutes = {AppRoutes.login, AppRoutes.register};
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: AppRoutes.landing,
+  initialLocation: AppRoutes.login,
   refreshListenable: GoRouterRefreshStream(fb.FirebaseAuth.instance.authStateChanges()),
   redirect: (context, state) {
     final loggedIn = fb.FirebaseAuth.instance.currentUser != null;
     final isPublicRoute = _publicRoutes.contains(state.matchedLocation);
 
-    if (!loggedIn && !isPublicRoute) return AppRoutes.landing;
+    if (!loggedIn && !isPublicRoute) return AppRoutes.login;
     if (loggedIn && isPublicRoute) return AppRoutes.home;
     return null;
   },
   routes: [
     // Routes for authentication
-    GoRoute(
-      path: AppRoutes.landing,
-      builder: (_, _) => const LandingPage(),
-    ),
     GoRoute(
       path: AppRoutes.login,
       builder: (_, _) => const LoginPage(),

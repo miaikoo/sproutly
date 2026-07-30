@@ -6,24 +6,24 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../../../shared/widgets/activity_image.dart';
+import '../../../shared/widgets/custom_icon.dart';
 import '../../../shared/widgets/page_header.dart';
 
 /// The board types a parent can start from, with the route each one opens.
 const _options = [
   (
     title: 'Aktivitas',
-    image: 'assets/images/Belajar.png',
+    image: 'assets/icons/aktivitas.png',
     route: AppRoutes.createBoardActivity,
   ),
   (
     title: 'Menunggu',
-    image: 'assets/images/Menunggu.png',
+    image: 'assets/icons/menunggu.png',
     route: AppRoutes.createWaitingBoard,
   ),
   (
     title: 'Emosi',
-    image: 'assets/images/Bahagia.png',
+    image: 'assets/icons/solar_smile-circle-bold.svg',
     route: AppRoutes.createEmotionBoard,
   ),
 ];
@@ -157,9 +157,11 @@ class _OptionCard extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox(
-                  width: 72,
-                  height: 72,
-                  child: ActivityImage(image),
+                  width: 48,
+                  height: 48,
+                  child: image.endsWith('.svg')
+                      ? CustomIcon(assetName: image, size: 48, color: AppColors.teal800)
+                      : Image.asset(image, fit: BoxFit.contain),
                 ),
                 AppSpacing.gapHLG,
                 Expanded(child: Text(title, style: AppTextStyles.headingL)),

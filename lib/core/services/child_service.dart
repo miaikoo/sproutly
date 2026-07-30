@@ -117,10 +117,17 @@ final childServiceProvider = Provider<ChildService>((ref) {
   return ChildService(ref.watch(firestoreProvider));
 });
 
-/// Every child profile under the signed-in parent.
+/// Every child profile under the signed-in parent (or linked to the therapist).
 final childrenForParentProvider = StreamProvider<List<Child>>((ref) {
   final user = ref.watch(authStateChangesProvider).valueOrNull;
   if (user == null) return const Stream.empty();
+
+  final profile = ref.watch(currentUserProfileProvider).valueOrNull;
+  if (profile == null) return const Stream.empty();
+
+  if (profile.role == UserRole.therapist) {
+    return ref.watch(childServiceProvider).watchChildrenForTherapist(user.uid);
+  }
   return ref.watch(childServiceProvider).watchChildrenForParent(user.uid);
 });
 
@@ -136,7 +143,14 @@ final currentChildProvider = StreamProvider<Child?>((ref) {
 
   final activeId = ref.watch(activeChildIdProvider);
 
-  return ref.watch(childServiceProvider).watchChildrenForParent(user.uid).map((children) {
+  final profile = ref.watch(currentUserProfileProvider).valueOrNull;
+  if (profile == null) return const Stream.empty();
+
+  final stream = profile.role == UserRole.therapist
+      ? ref.watch(childServiceProvider).watchChildrenForTherapist(user.uid)
+      : ref.watch(childServiceProvider).watchChildrenForParent(user.uid);
+
+  return stream.map((children) {
     if (children.isEmpty) return null;
     return children.firstWhere(
       (c) => c.id == activeId,

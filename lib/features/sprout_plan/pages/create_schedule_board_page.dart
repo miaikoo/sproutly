@@ -9,6 +9,7 @@ import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
 import '../../../shared/widgets/custom_icon.dart';
+import '../../../shared/widgets/slot_box.dart';
 import 'board_editor.dart';
 import '../../../shared/widgets/activity_image.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -18,6 +19,29 @@ class _ScheduleSlot {
   TimeOfDay time;
   _ScheduleSlot({required this.time});
 }
+
+/// A couple of hand-picked routines a parent can drop straight onto the board
+/// instead of building one card by card.
+class _Template {
+  const _Template(this.title, this.picks);
+  final String title;
+  final List<(String catalogId, TimeOfDay time)> picks;
+}
+
+const _templates = [
+  _Template('Rutinitas Pagi', [
+    ('sikat_gigi', TimeOfDay(hour: 6, minute: 30)),
+    ('mandi', TimeOfDay(hour: 6, minute: 45)),
+    ('memakai_baju', TimeOfDay(hour: 7, minute: 15)),
+    ('makan', TimeOfDay(hour: 7, minute: 30)),
+  ]),
+  _Template('Rutinitas Malam', [
+    ('makan', TimeOfDay(hour: 18, minute: 30)),
+    ('mandi', TimeOfDay(hour: 19, minute: 0)),
+    ('sikat_gigi', TimeOfDay(hour: 19, minute: 30)),
+    ('tidur', TimeOfDay(hour: 20, minute: 0)),
+  ]),
+];
 
 class CreateScheduleBoardPage extends ConsumerStatefulWidget {
   const CreateScheduleBoardPage({super.key});
@@ -31,6 +55,11 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
   final List<_ScheduleSlot> _slots = [
     _ScheduleSlot(time: const TimeOfDay(hour: 5, minute: 0)),
   ];
+
+  /// Up to two reward activities offered after the routine is done — the
+  /// "kemudian aku bisa melakukan..." step. Null slots are just unfilled.
+  final List<String?> _thenIds = [null, null];
+
   bool _isSaving = false;
 
   @override
@@ -38,6 +67,11 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
     _titleCtrl.dispose();
     super.dispose();
   }
+
+  /// The child's own activity cards, so a `custom-*` id in a slot resolves to
+  /// the right picture.
+  List<ActivityCatalogItem> get _custom =>
+      ref.watch(currentChildProvider).valueOrNull?.customActivities ?? const [];
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +113,15 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                                   ),
                                   Expanded(
                                     child: Text(
-                                      'Waktu',
+                                      'Timer',
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.bodyS,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 56,
+                                    child: Text(
+                                      'Selesai',
                                       textAlign: TextAlign.center,
                                       style: AppTextStyles.bodyS,
                                     ),
@@ -99,6 +141,21 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                         ),
                         const SizedBox(height: 24),
                         _buildAddButton(),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: TextButton(
+                            onPressed: _useTemplate,
+                            child: Text(
+                              'Gunakan Template',
+                              style: AppTextStyles.bodyM.copyWith(
+                                color: AppColors.mauve600,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildThenPanel(),
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -130,6 +187,14 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
               style: AppTextStyles.displayM,
               overflow: TextOverflow.ellipsis,
             ),
+          ),
+          IconButton(
+            onPressed: _openSettings,
+            icon: const CustomIcon(
+              assetName: 'assets/icons/solar_settings-bold.svg',
+              color: AppColors.steel700,
+            ),
+            tooltip: 'Pengaturan papan',
           ),
           IconButton(
             onPressed: _isSaving ? null : _save,
@@ -199,6 +264,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
     final catalogItem = slot.activityId == null ? null : ActivityCatalog.byId(slot.activityId!);
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: GestureDetector(
@@ -248,6 +314,18 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
             ),
           ),
         ),
+        const SizedBox(width: 16),
+        // Preview of the completion mark the child will tap while running the
+        // board — nothing to do here yet, so it stays unchecked and inert.
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: AppColors.steel200,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(Icons.check, color: AppColors.steel500),
+        ),
         if (_slots.length > 1) ...[
           const SizedBox(width: 8),
           IconButton(
@@ -292,6 +370,60 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
     );
   }
 
+  Widget _buildThenPanel() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.steel500,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'kemudian aku bisa melakukan...',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.headingM.copyWith(color: AppColors.white),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 120,
+                  child: SlotBox(
+                    activityId: _thenIds[0],
+                    onTap: () => _pickThen(0),
+                    customActivities: _custom,
+                    accent: AppColors.white,
+                    onLight: false,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Atau', style: AppTextStyles.bodyM.copyWith(color: AppColors.white)),
+              ),
+              Expanded(
+                child: SizedBox(
+                  height: 120,
+                  child: SlotBox(
+                    activityId: _thenIds[1],
+                    onTap: () => _pickThen(1),
+                    customActivities: _custom,
+                    accent: AppColors.white,
+                    onLight: false,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _editTitle() async {
     final result = await promptForTitle(context, current: _titleCtrl.text);
     if (result != null) setState(() => _titleCtrl.text = result);
@@ -304,11 +436,74 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
     }
   }
 
+  Future<void> _pickThen(int index) async {
+    final result = await showActivityPicker(context, title: 'Kemudian aku bisa...');
+    if (result != null) setState(() => _thenIds[index] = result);
+  }
+
   Future<void> _pickTime(int index) async {
     final picked = await showTimePicker(context: context, initialTime: _slots[index].time);
     if (picked != null) {
       setState(() => _slots[index].time = picked);
     }
+  }
+
+  Future<void> _useTemplate() async {
+    final picked = await showModalBottomSheet<_Template>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Pilih Template', style: AppTextStyles.headingL),
+            ),
+            for (final template in _templates)
+              ListTile(
+                title: Text(template.title),
+                subtitle: Text('${template.picks.length} kegiatan'),
+                onTap: () => Navigator.pop(context, template),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null) return;
+
+    setState(() {
+      _titleCtrl.text = picked.title;
+      _slots
+        ..clear()
+        ..addAll([
+          for (final pick in picked.picks)
+            _ScheduleSlot(time: pick.$2)..activityId = pick.$1,
+        ]);
+    });
+  }
+
+  Future<void> _openSettings() async {
+    final reset = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pengaturan Papan'),
+        content: const Text('Kosongkan semua kegiatan yang sudah dipilih dan mulai dari awal?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Reset papan')),
+        ],
+      ),
+    );
+    if (reset != true) return;
+
+    setState(() {
+      _titleCtrl.text = 'Rutinitas Pagi';
+      _slots
+        ..clear()
+        ..add(_ScheduleSlot(time: const TimeOfDay(hour: 5, minute: 0)));
+      _thenIds[0] = null;
+      _thenIds[1] = null;
+    });
   }
 
   Future<void> _save() async {
@@ -338,6 +533,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                   start: DateTime(now.year, now.month, now.day, slot.time.hour, slot.time.minute),
                 ),
             ],
+            thenActivityIds: [for (final id in _thenIds) ?id],
           );
 
       if (mounted) context.go(AppRoutes.board);
