@@ -107,10 +107,10 @@ final scheduleServiceProvider = Provider<ScheduleService>((ref) {
   return ScheduleService(ref.watch(firestoreProvider));
 });
 
-final schedulesForChildProvider = StreamProvider.family<List<Schedule>, String>((ref, childId) {
+final schedulesForChildProvider = StreamProvider.autoDispose.family<List<Schedule>, String>((ref, childId) {
   return ref.watch(scheduleServiceProvider).watchSchedulesForChild(childId);
 });
 
-final scheduleByIdProvider = StreamProvider.family<Schedule?, String>((ref, id) {
+final scheduleByIdProvider = StreamProvider.autoDispose.family<Schedule?, String>((ref, id) {
   return ref.watch(scheduleServiceProvider).watchScheduleById(id);
 });

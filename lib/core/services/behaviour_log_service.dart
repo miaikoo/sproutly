@@ -29,6 +29,6 @@ final behaviourLogServiceProvider = Provider<BehaviourLogService>((ref) {
   return BehaviourLogService(ref.watch(firestoreProvider));
 });
 
-final logsForChildProvider = StreamProvider.family<List<BehaviourLog>, String>((ref, childId) {
+final logsForChildProvider = StreamProvider.autoDispose.family<List<BehaviourLog>, String>((ref, childId) {
   return ref.watch(behaviourLogServiceProvider).watchLogsForChild(childId);
 });

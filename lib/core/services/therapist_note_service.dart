@@ -29,6 +29,6 @@ final therapistNoteServiceProvider = Provider<TherapistNoteService>((ref) {
   return TherapistNoteService(ref.watch(firestoreProvider));
 });
 
-final notesForChildProvider = StreamProvider.family<List<TherapistNote>, String>((ref, childId) {
+final notesForChildProvider = StreamProvider.autoDispose.family<List<TherapistNote>, String>((ref, childId) {
   return ref.watch(therapistNoteServiceProvider).watchNotesForChild(childId);
 });

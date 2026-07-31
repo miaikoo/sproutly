@@ -98,7 +98,16 @@ class AuthService {
     }
   }
 
-  Future<void> logout() => _auth.signOut();
+  /// Signs out, then cycles the Firestore connection. Listeners still
+  /// attached at sign-out get a PERMISSION_DENIED as their credentials
+  /// disappear, and the SDK caches that denial against the query target —
+  /// it won't retry on its own even once a new session logs back in with
+  /// valid access. Toggling the network drops that cached state.
+  Future<void> logout() async {
+    await _auth.signOut();
+    await _firestore.disableNetwork();
+    await _firestore.enableNetwork();
+  }
 
   Future<void> sendPasswordResetEmail(String email) async {
     try {

@@ -159,7 +159,7 @@ final currentChildProvider = StreamProvider<Child?>((ref) {
   });
 });
 
-final childByIdProvider = StreamProvider.family<Child?, String>((ref, childId) {
+final childByIdProvider = StreamProvider.autoDispose.family<Child?, String>((ref, childId) {
   return ref.watch(childServiceProvider).watchChildById(childId);
 });
 

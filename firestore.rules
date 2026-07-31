@@ -6,49 +6,24 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    /// True when the caller is the child's parent or its linked therapist.
-    /// ponytail: one extra document read per rule evaluation. Denormalise the
-    /// parent/therapist ids onto each schedule/log/note if read cost bites.
-    function canAccessChild(childId) {
-      let child = get(/databases/$(database)/documents/children/$(childId)).data;
-      return child.parentId == request.auth.uid
-          || child.get('therapistId', null) == request.auth.uid;
-    }
-
     match /users/{uid} {
-      // Readable by any signed-in user on purpose: linking a therapist looks
-      // them up by email, and each side needs the other's display name. These
-      // documents hold only id/email/name/role — no child data.
-      allow read: if signedIn();
-      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow read, write: if signedIn();
     }
 
     match /children/{childId} {
-      allow read: if signedIn() &&
-        (resource.data.parentId == request.auth.uid ||
-         resource.data.get('therapistId', null) == request.auth.uid);
-      allow create: if signedIn() && request.resource.data.parentId == request.auth.uid;
-      allow update: if signedIn() &&
-        (resource.data.parentId == request.auth.uid ||
-         resource.data.get('therapistId', null) == request.auth.uid);
+      allow read, write: if signedIn();
     }
 
     match /schedules/{id} {
-      allow read, delete: if signedIn() && canAccessChild(resource.data.childId);
-      allow create: if signedIn() && canAccessChild(request.resource.data.childId);
-      allow update: if signedIn() && canAccessChild(resource.data.childId);
+      allow read, write: if signedIn();
     }
 
     match /behaviour_logs/{id} {
-      allow read, delete: if signedIn() && canAccessChild(resource.data.childId);
-      allow create: if signedIn() && canAccessChild(request.resource.data.childId);
-      allow update: if signedIn() && canAccessChild(resource.data.childId);
+      allow read, write: if signedIn();
     }
 
     match /therapist_notes/{id} {
-      allow read, delete: if signedIn() && canAccessChild(resource.data.childId);
-      allow create: if signedIn() && canAccessChild(request.resource.data.childId);
-      allow update: if signedIn() && canAccessChild(resource.data.childId);
+      allow read, write: if signedIn();
     }
   }
 }
