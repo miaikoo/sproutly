@@ -28,8 +28,8 @@ class AnalyticsPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 24, top: 16, bottom: 8),
-                  child: _buildHeader(context),
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 12),
+                  child: _buildHeader(context, childAsync.valueOrNull?.name ?? 'Anak'),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
@@ -82,17 +82,45 @@ class AnalyticsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, String childName) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_ios_new, size: 22),
-            color: AppColors.textPrimary,
-            tooltip: 'Kembali',
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Behaviour Analytics',
+              style: AppTextStyles.displayL.copyWith(
+                color: const Color(0xFF353C3A),
+                fontWeight: FontWeight.bold,
+                fontSize: 26,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'ringkasan 7 hari terakhir · $childName',
+              style: AppTextStyles.bodyM.copyWith(
+                color: const Color(0xFF7A8A88),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        Container(
+          width: 44,
+          height: 44,
+          decoration: const BoxDecoration(
+            color: Color(0xFF7EA29C),
+            shape: BoxShape.circle,
           ),
-        AppSpacing.gapHMD,
-        Text('SproutTrack', style: AppTextStyles.displayL),
+          child: const Icon(
+            Icons.calendar_today_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
       ],
     );
   }

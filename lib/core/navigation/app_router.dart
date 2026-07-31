@@ -103,6 +103,10 @@ final GoRouter appRouter = GoRouter(
           builder: (_, _) => const BoardPage(),
         ),
         GoRoute(
+          path: AppRoutes.analytics,
+          builder: (_, _) => const AnalyticsPage(),
+        ),
+        GoRoute(
           path: AppRoutes.buddy,
           builder: (_, _) => const BuddyPage(),
         ),
