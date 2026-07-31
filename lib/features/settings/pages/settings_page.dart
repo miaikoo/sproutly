@@ -41,6 +41,7 @@ class SettingsPage extends ConsumerWidget {
                       iconAsset: 'assets/icons/solar_running-2-bold.svg', 
                       title: 'Kelola aktivitas',
                       subtitle: 'Lihat dan edit kartu aktivitas',
+                      onTap: () => context.push(AppRoutes.manageActivities),
                     ),
                   ),
                   const SizedBox(height: 24),

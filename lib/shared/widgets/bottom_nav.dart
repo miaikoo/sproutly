@@ -20,6 +20,7 @@ class _Destination {
 const _destinations = [
   _Destination(AppRoutes.home, 'Beranda', 'assets/icons/solar_home-bold.svg'),
   _Destination(AppRoutes.board, 'Papan', 'assets/icons/square-bold.svg'),
+  _Destination(AppRoutes.analytics, 'Analytics', 'assets/icons/solar_running-2-bold.svg'),
   _Destination(AppRoutes.buddy, 'Buddy', 'assets/icons/solar_smile-circle-bold.svg'),
 ];
 

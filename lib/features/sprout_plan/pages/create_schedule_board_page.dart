@@ -8,6 +8,7 @@ import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
+import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import '../../../shared/widgets/slot_box.dart';
 import 'board_editor.dart';
@@ -44,23 +45,52 @@ const _templates = [
 ];
 
 class CreateScheduleBoardPage extends ConsumerStatefulWidget {
-  const CreateScheduleBoardPage({super.key});
+  const CreateScheduleBoardPage({super.key, this.boardToEdit});
+
+  final Schedule? boardToEdit;
 
   @override
   ConsumerState<CreateScheduleBoardPage> createState() => _CreateScheduleBoardPageState();
 }
 
 class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPage> {
-  final _titleCtrl = TextEditingController(text: 'Rutinitas Pagi');
-  final List<_ScheduleSlot> _slots = [
-    _ScheduleSlot(time: const TimeOfDay(hour: 5, minute: 0)),
-  ];
-
-  /// Up to two reward activities offered after the routine is done — the
-  /// "kemudian aku bisa melakukan..." step. Null slots are just unfilled.
+  late final TextEditingController _titleCtrl;
+  final List<_ScheduleSlot> _slots = [];
   final List<String?> _thenIds = [null, null];
-
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleCtrl = TextEditingController(
+      text: widget.boardToEdit != null ? widget.boardToEdit!.title : 'Rutinitas Pagi',
+    );
+    if (widget.boardToEdit != null) {
+      for (final act in widget.boardToEdit!.activities) {
+        final slot = _ScheduleSlot(time: TimeOfDay.fromDateTime(act.startTime));
+        final customList = ref.read(currentChildProvider).valueOrNull?.customActivities ?? const [];
+        final catalogItem = ActivityCatalog.allWith(customList).firstWhere(
+          (item) => item.image == act.icon || item.title == act.title,
+          orElse: () => ActivityCatalog.items.first,
+        );
+        slot.activityId = catalogItem.id;
+        _slots.add(slot);
+      }
+      if (_slots.isEmpty) {
+        _slots.add(_ScheduleSlot(time: const TimeOfDay(hour: 5, minute: 0)));
+      }
+      _thenIds.clear();
+      for (var i = 0; i < 2; i++) {
+        _thenIds.add(
+          widget.boardToEdit!.thenActivityIds.length > i
+              ? widget.boardToEdit!.thenActivityIds[i]
+              : null,
+        );
+      }
+    } else {
+      _slots.add(_ScheduleSlot(time: const TimeOfDay(hour: 5, minute: 0)));
+    }
+  }
 
   @override
   void dispose() {
@@ -534,6 +564,7 @@ class _CreateScheduleBoardPageState extends ConsumerState<CreateScheduleBoardPag
                 ),
             ],
             thenActivityIds: [for (final id in _thenIds) ?id],
+            existingId: widget.boardToEdit?.id,
           );
 
       if (mounted) context.go(AppRoutes.board);

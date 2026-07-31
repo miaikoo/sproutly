@@ -146,11 +146,13 @@ class BoardDetailPage extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: AppColors.neutral800),
             onSelected: (value) => switch (value) {
+              'edit' => _editBoard(context, schedule),
               'rename' => _rename(context, ref, schedule),
               'delete' => _confirmDelete(context, ref, schedule),
               _ => null,
             },
             itemBuilder: (context) => const [
+              PopupMenuItem(value: 'edit', child: Text('Ubah isi papan')),
               PopupMenuItem(value: 'rename', child: Text('Ubah nama papan')),
               PopupMenuItem(value: 'delete', child: Text('Hapus papan')),
             ],
@@ -158,6 +160,23 @@ class BoardDetailPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _editBoard(BuildContext context, Schedule schedule) {
+    switch (schedule.type) {
+      case BoardType.schedule:
+        context.push(AppRoutes.createScheduleBoard, extra: schedule);
+        break;
+      case BoardType.firstThen:
+        context.push(AppRoutes.createFirstThenBoard, extra: schedule);
+        break;
+      case BoardType.waiting:
+        context.push(AppRoutes.createWaitingBoard, extra: schedule);
+        break;
+      case BoardType.emotion:
+        context.push(AppRoutes.createEmotionBoard, extra: schedule);
+        break;
+    }
   }
 
   Future<void> _rename(BuildContext context, WidgetRef ref, Schedule schedule) async {

@@ -50,8 +50,9 @@ class ScheduleService {
     List<ActivityCatalogItem> customActivities = const [],
     int? waitMinutes,
     List<String> thenActivityIds = const [],
+    String? existingId,
   }) async {
-    final id = newScheduleId();
+    final id = existingId ?? newScheduleId();
     final schedule = Schedule(
       id: id,
       childId: childId,
@@ -108,9 +109,11 @@ final scheduleServiceProvider = Provider<ScheduleService>((ref) {
 });
 
 final schedulesForChildProvider = StreamProvider.autoDispose.family<List<Schedule>, String>((ref, childId) {
+  if (ref.watch(authStateChangesProvider).valueOrNull == null) return const Stream.empty();
   return ref.watch(scheduleServiceProvider).watchSchedulesForChild(childId);
 });
 
 final scheduleByIdProvider = StreamProvider.autoDispose.family<Schedule?, String>((ref, id) {
+  if (ref.watch(authStateChangesProvider).valueOrNull == null) return const Stream.empty();
   return ref.watch(scheduleServiceProvider).watchScheduleById(id);
 });

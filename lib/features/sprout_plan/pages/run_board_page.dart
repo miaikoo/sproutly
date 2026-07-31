@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/data/companion_progress.dart';
 import '../../../core/data/reinforcement_policy.dart';
 import '../../../core/services/behaviour_log_service.dart';
 import '../../../core/services/child_service.dart';
@@ -346,6 +347,11 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
       final phrase = phraseFor(level);
       unawaited(_voice.speak(phrase));
 
+      final reward = rewardByLevel[level]!;
+      unawaited(
+        ref.read(childServiceProvider).awardReward(child.id, points: reward, exp: reward),
+      );
+
       if (mounted) {
         setState(() {
           _askingMood = false;
@@ -514,7 +520,7 @@ class _MoodPrompt extends StatelessWidget {
         Text(activityTitle, style: AppTextStyles.headingM),
         AppSpacing.gapXS,
         Text(
-          'Bagaimana perasaan anak?',
+          'Bagaimana perasaanmu?',
           style: AppTextStyles.displayM,
           textAlign: TextAlign.center,
         ),

@@ -8,6 +8,7 @@ import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
+import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import 'board_editor.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -16,7 +17,9 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 
 class CreateFirstThenBoardPage extends ConsumerStatefulWidget {
-  const CreateFirstThenBoardPage({super.key});
+  const CreateFirstThenBoardPage({super.key, this.boardToEdit});
+
+  final Schedule? boardToEdit;
 
   @override
   ConsumerState<CreateFirstThenBoardPage> createState() => _CreateFirstThenBoardPageState();
@@ -27,6 +30,30 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
   String? _firstId;
   String? _thenId;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.boardToEdit != null) {
+      _title = widget.boardToEdit!.title;
+      final customList = ref.read(currentChildProvider).valueOrNull?.customActivities ?? const [];
+      final list = widget.boardToEdit!.activities;
+      if (list.isNotEmpty) {
+        final firstItem = ActivityCatalog.allWith(customList).firstWhere(
+          (item) => item.image == list[0].icon || item.title == list[0].title,
+          orElse: () => ActivityCatalog.items.first,
+        );
+        _firstId = firstItem.id;
+      }
+      if (list.length > 1) {
+        final thenItem = ActivityCatalog.allWith(customList).firstWhere(
+          (item) => item.image == list[1].icon || item.title == list[1].title,
+          orElse: () => ActivityCatalog.items.first,
+        );
+        _thenId = thenItem.id;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +211,7 @@ class _CreateFirstThenBoardPageState extends ConsumerState<CreateFirstThenBoardP
               (catalogId: _firstId!, start: now),
               (catalogId: _thenId!, start: now.add(const Duration(minutes: 15))),
             ],
+            existingId: widget.boardToEdit?.id,
           );
 
       if (mounted) context.go(AppRoutes.board);

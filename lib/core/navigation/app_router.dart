@@ -17,6 +17,9 @@ import '../../features/settings/pages/about_sproutly_page.dart';
 import '../../features/settings/pages/privacy_policy_page.dart';
 import '../../features/settings/pages/terms_of_service_page.dart';
 import '../../features/settings/pages/customer_support_page.dart';
+import '../../features/settings/pages/manage_activities_page.dart';
+import '../../core/data/activity_catalog.dart';
+import '../../models/schedule.dart';
 
 import '../../features/sprout_plan/pages/board_page.dart';
 import '../../features/sprout_plan/pages/create_board_page.dart';
@@ -32,6 +35,7 @@ import '../../features/sprout_plan/pages/activity_detail_page.dart';
 import '../../features/sprout_plan/pages/run_board_page.dart';
 
 import '../../features/sprout_buddy/pages/buddy_page.dart';
+import '../../features/sprout_buddy/pages/companion_store_page.dart';
 import '../../features/sprout_track/pages/analytics_page.dart';
 import '../../features/sprout_track/pages/report_page.dart';
 import '../../features/sprout_link/pages/therapist_page.dart';
@@ -116,23 +120,26 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.createScheduleBoard,
-      builder: (_, _) => const CreateScheduleBoardPage(),
+      builder: (_, state) => CreateScheduleBoardPage(boardToEdit: state.extra as Schedule?),
     ),
     GoRoute(
       path: AppRoutes.createActivity,
-      builder: (_, _) => const CreateActivityPage(),
+      builder: (_, state) {
+        final activity = state.extra as ActivityCatalogItem?;
+        return CreateActivityPage(activityToEdit: activity);
+      },
     ),
     GoRoute(
       path: AppRoutes.createFirstThenBoard,
-      builder: (_, _) => const CreateFirstThenBoardPage(),
+      builder: (_, state) => CreateFirstThenBoardPage(boardToEdit: state.extra as Schedule?),
     ),
     GoRoute(
       path: AppRoutes.createWaitingBoard,
-      builder: (context, state) => const CreateWaitingBoardPage(),
+      builder: (context, state) => CreateWaitingBoardPage(boardToEdit: state.extra as Schedule?),
     ),
     GoRoute(
       path: AppRoutes.createEmotionBoard,
-      builder: (context, state) => const CreateEmotionBoardPage(),
+      builder: (context, state) => CreateEmotionBoardPage(boardToEdit: state.extra as Schedule?),
     ),
 
     // Routes for other pages
@@ -148,6 +155,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.settings,
       builder: (_, _) => const SettingsPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.manageActivities,
+      builder: (_, _) => const ManageActivitiesPage(),
     ),
     GoRoute(
       path: AppRoutes.accessibility,
@@ -199,6 +210,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.therapist,
       builder: (_, _) => const TherapistPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.companionStore,
+      builder: (_, _) => const CompanionStorePage(),
     ),
   ],
 );

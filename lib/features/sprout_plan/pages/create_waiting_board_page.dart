@@ -8,13 +8,16 @@ import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
+import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import '../../../shared/widgets/slot_box.dart';
 import 'board_editor.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 class CreateWaitingBoardPage extends ConsumerStatefulWidget {
-  const CreateWaitingBoardPage({super.key});
+  const CreateWaitingBoardPage({super.key, this.boardToEdit});
+
+  final Schedule? boardToEdit;
 
   @override
   ConsumerState<CreateWaitingBoardPage> createState() => _CreateWaitingBoardPageState();
@@ -27,6 +30,38 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
   String? _thenBId;
   int _waitMinutes = 5;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.boardToEdit != null) {
+      _title = widget.boardToEdit!.title;
+      _waitMinutes = widget.boardToEdit!.waitMinutes ?? 5;
+      final customList = ref.read(currentChildProvider).valueOrNull?.customActivities ?? const [];
+      final list = widget.boardToEdit!.activities;
+      if (list.isNotEmpty) {
+        final waitingFor = ActivityCatalog.allWith(customList).firstWhere(
+          (item) => item.image == list[0].icon || item.title == list[0].title,
+          orElse: () => ActivityCatalog.items.first,
+        );
+        _waitingForId = waitingFor.id;
+      }
+      if (list.length > 1) {
+        final thenA = ActivityCatalog.allWith(customList).firstWhere(
+          (item) => item.image == list[1].icon || item.title == list[1].title,
+          orElse: () => ActivityCatalog.items.first,
+        );
+        _thenAId = thenA.id;
+      }
+      if (list.length > 2) {
+        final thenB = ActivityCatalog.allWith(customList).firstWhere(
+          (item) => item.image == list[2].icon || item.title == list[2].title,
+          orElse: () => ActivityCatalog.items.first,
+        );
+        _thenBId = thenB.id;
+      }
+    }
+  }
 
   /// The child's own activity cards, so a `custom-*` id in a slot
   /// resolves to the right picture.
@@ -295,6 +330,7 @@ class _CreateWaitingBoardPageState extends ConsumerState<CreateWaitingBoardPage>
               for (var i = 0; i < rewards.length; i++)
                 (catalogId: rewards[i], start: now.add(Duration(minutes: _waitMinutes + i))),
             ],
+            existingId: widget.boardToEdit?.id,
           );
 
       if (mounted) context.go(AppRoutes.board);

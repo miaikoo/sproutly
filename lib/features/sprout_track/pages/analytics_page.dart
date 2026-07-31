@@ -24,37 +24,57 @@ class AnalyticsPage extends ConsumerWidget {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
-            child: SingleChildScrollView(
-              padding: AppSpacing.pagePadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context),
-                  AppSpacing.gapXL,
-                  childAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Text('Gagal memuat profil anak: $e'),
-                    data: (child) {
-                      if (child == null) return Text('Profil anak belum tersedia.');
-                      return ChildProgressPanel(
-                        childId: child.id,
-                        footer: SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            style: FilledButton.styleFrom(backgroundColor: AppColors.peach500),
-                            onPressed: () => context.push(AppRoutes.report),
-                            child: Text(
-                              'Lihat Laporan',
-                              style: AppTextStyles.headingM.copyWith(color: AppColors.white),
-                            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 24, top: 16, bottom: 8),
+                  child: _buildHeader(context),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: AppSpacing.pagePadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        childAsync.when(
+                          loading: () => const SizedBox(
+                            height: 300,
+                            child: Center(child: CircularProgressIndicator()),
                           ),
+                          error: (e, _) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Text('Gagal memuat profil anak: $e', style: AppTextStyles.bodyM),
+                          ),
+                          data: (child) {
+                            if (child == null) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                child: Text('Profil anak belum tersedia.', style: AppTextStyles.bodyM),
+                              );
+                            }
+                            return ChildProgressPanel(
+                              childId: child.id,
+                              footer: SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  style: FilledButton.styleFrom(backgroundColor: AppColors.peach500),
+                                  onPressed: () => context.push(AppRoutes.report),
+                                  child: Text(
+                                    'Lihat Laporan',
+                                    style: AppTextStyles.headingM.copyWith(color: AppColors.white),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
+                        AppSpacing.gapXXL,
+                      ],
+                    ),
                   ),
-                  AppSpacing.gapXXL,
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

@@ -111,6 +111,60 @@ class ChildService {
       'customActivities': FieldValue.arrayRemove([item.toJson()]),
     });
   }
+
+  Future<void> updateCustomActivity(
+    String childId,
+    ActivityCatalogItem oldItem,
+    ActivityCatalogItem newItem,
+  ) async {
+    final docRef = _children.doc(childId);
+    await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
+      if (!snapshot.exists) return;
+      final child = Child.fromJson(snapshot.data()!);
+      final updatedList = child.customActivities.map((act) {
+        if (act.id == oldItem.id) {
+          return newItem;
+        }
+        return act;
+      }).toList();
+      transaction.update(docRef, {
+        'customActivities': updatedList.map((e) => e.toJson()).toList(),
+      });
+    });
+  }
+
+
+  /// Credits [points] (spendable) and [exp] (lifetime, for level) after a
+  /// completed activity. Kept as two increments per the design: exp never
+  /// shrinks even after the child spends points in the store.
+  Future<void> awardReward(String childId, {required int points, required int exp}) {
+    return _children.doc(childId).update({
+      'points': FieldValue.increment(points),
+      'exp': FieldValue.increment(exp),
+    });
+  }
+
+  /// Spends [cost] points on [itemId]. Runs as a transaction so two rapid
+  /// taps (or a flaky connection retry) can't double-spend the same points.
+  /// Throws [StateError] if the item's already owned or points fall short.
+  Future<void> purchaseItem(String childId, {required String itemId, required int cost}) {
+    final ref = _children.doc(childId);
+    return _firestore.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final child = Child.fromJson(snap.data()!);
+      if (child.unlockedItemIds.contains(itemId)) {
+        throw StateError('Item sudah dimiliki.');
+      }
+      if (child.points < cost) {
+        throw StateError('Poin tidak cukup.');
+      }
+      tx.update(ref, {
+        'points': FieldValue.increment(-cost),
+        'unlockedItemIds': FieldValue.arrayUnion([itemId]),
+      });
+    });
+  }
 }
 
 final childServiceProvider = Provider<ChildService>((ref) {
@@ -160,6 +214,7 @@ final currentChildProvider = StreamProvider<Child?>((ref) {
 });
 
 final childByIdProvider = StreamProvider.autoDispose.family<Child?, String>((ref, childId) {
+  if (ref.watch(authStateChangesProvider).valueOrNull == null) return const Stream.empty();
   return ref.watch(childServiceProvider).watchChildById(childId);
 });
 

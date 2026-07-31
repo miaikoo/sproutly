@@ -36,6 +36,21 @@ class Child {
   @JsonKey(defaultValue: <String>[])
   final List<String> interventionTargets;
 
+  /// Spendable in the Sprout Store. Goes up on activity completion, down on
+  /// purchase — unlike [exp], this can shrink.
+  @JsonKey(defaultValue: 0)
+  final int points;
+
+  /// Lifetime total, never spent. Drives the companion's level — see
+  /// [levelForExp] in `companion_progress.dart`.
+  @JsonKey(defaultValue: 0)
+  final int exp;
+
+  /// Ids of store items already bought, so they render as owned instead of
+  /// purchasable again.
+  @JsonKey(defaultValue: <String>[])
+  final List<String> unlockedItemIds;
+
   const Child({
     required this.id,
     required this.parentId,
@@ -47,6 +62,9 @@ class Child {
     this.customActivities = const [],
     this.preferences = const [],
     this.interventionTargets = const [],
+    this.points = 0,
+    this.exp = 0,
+    this.unlockedItemIds = const [],
   });
 
   int ageInYears(DateTime now) {

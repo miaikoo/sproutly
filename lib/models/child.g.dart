@@ -29,6 +29,13 @@ Child _$ChildFromJson(Map<String, dynamic> json) => Child(
           ?.map((e) => e as String)
           .toList() ??
       [],
+  points: (json['points'] as num?)?.toInt() ?? 0,
+  exp: (json['exp'] as num?)?.toInt() ?? 0,
+  unlockedItemIds:
+      (json['unlockedItemIds'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$ChildToJson(Child instance) => <String, dynamic>{
@@ -42,6 +49,9 @@ Map<String, dynamic> _$ChildToJson(Child instance) => <String, dynamic>{
   'customActivities': instance.customActivities.map((e) => e.toJson()).toList(),
   'preferences': instance.preferences,
   'interventionTargets': instance.interventionTargets,
+  'points': instance.points,
+  'exp': instance.exp,
+  'unlockedItemIds': instance.unlockedItemIds,
 };
 
 const _$SeverityEnumMap = {

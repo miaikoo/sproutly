@@ -31,7 +31,9 @@ const _categoryOptions = <String, ActivityCategory>{
 };
 
 class CreateActivityPage extends ConsumerStatefulWidget {
-  const CreateActivityPage({super.key});
+  const CreateActivityPage({super.key, this.activityToEdit});
+
+  final ActivityCatalogItem? activityToEdit;
 
   @override
   ConsumerState<CreateActivityPage> createState() => _CreateActivityPageState();
@@ -44,6 +46,17 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
   final List<String> _steps = [];
   bool _isSaving = false;
   bool _isUploading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.activityToEdit != null) {
+      _title = widget.activityToEdit!.title;
+      _image = widget.activityToEdit!.image;
+      _category = widget.activityToEdit!.category;
+      _steps.addAll(widget.activityToEdit!.steps);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +110,7 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
           ),
           const SizedBox(width: 16),
           Text(
-            'Buat Aktivitas',
+            widget.activityToEdit != null ? 'Edit Aktivitas' : 'Buat Aktivitas',
             style: AppTextStyles.displayL,
           ),
           const Spacer(),
@@ -384,18 +397,29 @@ class _CreateActivityPageState extends ConsumerState<CreateActivityPage> {
       final child = await ref.read(currentChildProvider.future);
       if (child == null) throw StateError('Profil anak belum tersedia.');
 
+      final isEdit = widget.activityToEdit != null;
       final item = ActivityCatalogItem(
         // Prefixed so a parent-made card can never collide with a preset id.
-        id: 'custom-${DateTime.now().millisecondsSinceEpoch}',
+        id: isEdit ? widget.activityToEdit!.id : 'custom-${DateTime.now().millisecondsSinceEpoch}',
         title: _title,
         image: _image,
         category: _category,
         steps: List.of(_steps),
       );
-      await ref.read(childServiceProvider).addCustomActivity(child.id, item);
+
+      if (isEdit) {
+        await ref.read(childServiceProvider).updateCustomActivity(child.id, widget.activityToEdit!, item);
+      } else {
+        await ref.read(childServiceProvider).addCustomActivity(child.id, item);
+      }
 
       if (mounted) {
-        showBoardSnack(context, '${item.title} ditambahkan ke daftar aktivitas.');
+        showBoardSnack(
+          context,
+          isEdit
+              ? '${item.title} berhasil diperbarui.'
+              : '${item.title} ditambahkan ke daftar aktivitas.',
+        );
         context.pop();
       }
     } catch (e) {

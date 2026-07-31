@@ -30,5 +30,6 @@ final therapistNoteServiceProvider = Provider<TherapistNoteService>((ref) {
 });
 
 final notesForChildProvider = StreamProvider.autoDispose.family<List<TherapistNote>, String>((ref, childId) {
+  if (ref.watch(authStateChangesProvider).valueOrNull == null) return const Stream.empty();
   return ref.watch(therapistNoteServiceProvider).watchNotesForChild(childId);
 });

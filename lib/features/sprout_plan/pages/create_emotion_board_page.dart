@@ -8,13 +8,16 @@ import '../../../core/services/child_service.dart';
 import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/enums.dart';
+import '../../../models/schedule.dart';
 import '../../../shared/widgets/custom_icon.dart';
 import '../../../shared/widgets/slot_box.dart';
 import 'board_editor.dart';
 import '../../../core/theme/app_text_styles.dart';
 
 class CreateEmotionBoardPage extends ConsumerStatefulWidget {
-  const CreateEmotionBoardPage({super.key});
+  const CreateEmotionBoardPage({super.key, this.boardToEdit});
+
+  final Schedule? boardToEdit;
 
   @override
   ConsumerState<CreateEmotionBoardPage> createState() => _CreateEmotionBoardPageState();
@@ -28,6 +31,96 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
   String? _thenAId;
   String? _thenBId;
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.boardToEdit != null) {
+      _title = widget.boardToEdit!.title;
+      final customList = ref.read(currentChildProvider).valueOrNull?.customActivities ?? const [];
+      final list = widget.boardToEdit!.activities;
+      if (list.isNotEmpty) {
+        final emotionItem = ActivityCatalog.allWith(customList).firstWhere(
+          (item) => item.image == list[0].icon || item.title == list[0].title,
+          orElse: () => ActivityCatalog.items.first,
+        );
+        _emotionId = emotionItem.id;
+      }
+      
+      final thenIds = widget.boardToEdit!.thenActivityIds;
+      if (thenIds.isNotEmpty) {
+        _thenAId = thenIds[0];
+        if (thenIds.length > 1) {
+          _thenBId = thenIds[1];
+        }
+        final copingActivities = list.sublist(1).where((act) {
+          final catalogItem = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == act.icon || item.title == act.title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          return !thenIds.contains(catalogItem.id);
+        }).toList();
+        
+        if (copingActivities.isNotEmpty) {
+          final copingA = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == copingActivities[0].icon || item.title == copingActivities[0].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _copingAId = copingA.id;
+        }
+        if (copingActivities.length > 1) {
+          final copingB = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == copingActivities[1].icon || item.title == copingActivities[1].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _copingBId = copingB.id;
+        }
+      } else {
+        final remaining = list.sublist(1);
+        if (remaining.isNotEmpty) {
+          final copingA = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == remaining[0].icon || item.title == remaining[0].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _copingAId = copingA.id;
+        }
+        if (remaining.length == 2) {
+          final thenA = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == remaining[1].icon || item.title == remaining[1].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _thenAId = thenA.id;
+        } else if (remaining.length == 3) {
+          final copingB = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == remaining[1].icon || item.title == remaining[1].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _copingBId = copingB.id;
+          final thenA = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == remaining[2].icon || item.title == remaining[2].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _thenAId = thenA.id;
+        } else if (remaining.length >= 4) {
+          final copingB = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == remaining[1].icon || item.title == remaining[1].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _copingBId = copingB.id;
+          final thenA = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == remaining[2].icon || item.title == remaining[2].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _thenAId = thenA.id;
+          final thenB = ActivityCatalog.allWith(customList).firstWhere(
+            (item) => item.image == remaining[3].icon || item.title == remaining[3].title,
+            orElse: () => ActivityCatalog.items.first,
+          );
+          _thenBId = thenB.id;
+        }
+      }
+    }
+  }
 
   /// The child's own activity cards, so a `custom-*` id in a slot
   /// resolves to the right picture.
@@ -304,6 +397,8 @@ class _CreateEmotionBoardPageState extends ConsumerState<CreateEmotionBoardPage>
               for (var i = 0; i < ordered.length; i++)
                 (catalogId: ordered[i], start: now.add(Duration(minutes: i))),
             ],
+            thenActivityIds: [?_thenAId, ?_thenBId],
+            existingId: widget.boardToEdit?.id,
           );
 
       if (mounted) context.go(AppRoutes.board);

@@ -30,5 +30,6 @@ final behaviourLogServiceProvider = Provider<BehaviourLogService>((ref) {
 });
 
 final logsForChildProvider = StreamProvider.autoDispose.family<List<BehaviourLog>, String>((ref, childId) {
+  if (ref.watch(authStateChangesProvider).valueOrNull == null) return const Stream.empty();
   return ref.watch(behaviourLogServiceProvider).watchLogsForChild(childId);
 });

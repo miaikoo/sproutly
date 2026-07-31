@@ -26,6 +26,7 @@ final currentUserProfileProvider = StreamProvider<model.User?>((ref) {
 });
 
 final userByIdProvider = StreamProvider.autoDispose.family<model.User?, String>((ref, uid) {
+  if (ref.watch(authStateChangesProvider).valueOrNull == null) return const Stream.empty();
   return ref.watch(firestoreProvider).collection('users').doc(uid).snapshots().map(
         (doc) => doc.exists ? model.User.fromJson(doc.data()!) : null,
       );

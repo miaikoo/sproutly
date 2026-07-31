@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/data/activity_catalog.dart';
+import '../../../core/navigation/app_routes.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/services/child_service.dart';
 import '../../../core/services/behaviour_log_service.dart';
@@ -9,10 +11,10 @@ import '../../../core/services/schedule_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../models/activity.dart';
+import '../../../models/child.dart';
 import '../../../models/enums.dart';
 import '../../../models/recommendation.dart';
 import '../../../models/schedule.dart';
-import '../../../shared/widgets/custom_icon.dart';
 import '../../../shared/widgets/activity_image.dart';
 
 /// How the AI's suggested prompting strategy reads to a parent.
@@ -37,26 +39,36 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
 
   @override
   Widget build(BuildContext context) {
+    final childAsync = ref.watch(currentChildProvider);
+    final child = childAsync.valueOrNull;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF7EA29C),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: Stack(
               children: [
-                _buildMapArea(),
+                // 1. Winding Map & Path Background
+                Positioned.fill(
+                  child: _buildMapCanvas(context),
+                ),
+
+                // 2. Header (Child Name, Date, Coin Pill, Shop Button)
                 Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: _buildHeader(),
+                  child: _buildHeader(child),
                 ),
+
+                // 3. SproutGuide AI Action Button / Card overlay
                 Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: _buildRecommendationPanel(),
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: _buildSproutGuideTrigger(),
                 ),
               ],
             ),
@@ -66,21 +78,25 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Child? child) {
+    final name = child?.name ?? 'John Doe';
+    const dateStr = 'Perjalanan sejak 16/07/2026';
+    final points = child?.points ?? 28;
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.background,
-            AppColors.background.withValues(alpha: 0.8),
-            AppColors.background.withValues(alpha: 0.0),
+            const Color(0xFF7EA29C).withValues(alpha: 0.95),
+            const Color(0xFF7EA29C).withValues(alpha: 0.6),
+            const Color(0xFF7EA29C).withValues(alpha: 0.0),
           ],
-          stops: const [0.3, 0.7, 1.0],
+          stops: const [0.0, 0.6, 1.0],
         ),
       ),
-      padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 48),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 28),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,13 +105,78 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'SproutGuide',
-                style: AppTextStyles.displayL,
+                name,
+                style: AppTextStyles.displayL.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
-                'Rekomendasi aktivitas berbasis AI',
-                style: AppTextStyles.headingS,
+                dateStr,
+                style: AppTextStyles.bodyM.copyWith(
+                  color: const Color(0xFF2C3E3A),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              // Coin Pill Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF70938D),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      offset: const Offset(0, 3),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('🪙', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$points',
+                      style: AppTextStyles.headingM.copyWith(
+                        color: AppColors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Shop Circle Button
+              GestureDetector(
+                onTap: () => context.push(AppRoutes.companionStore),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC4806C), // Terracotta / Peach 500
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        offset: const Offset(0, 4),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.storefront_rounded,
+                    color: AppColors.white,
+                    size: 26,
+                  ),
+                ),
               ),
             ],
           ),
@@ -104,83 +185,174 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
     );
   }
 
-  Widget _buildMapArea() {
-    return ListView.builder(
-      reverse: true,
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return _buildMapChunk(context, chunkIndex: index);
+  Widget _buildMapCanvas(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
+
+        // Node locations (normalized offset 0..1)
+        final nodePosList = [
+          const Offset(0.50, 0.16),
+          const Offset(0.80, 0.32),
+          const Offset(0.20, 0.48),
+          const Offset(0.50, 0.64),
+          const Offset(0.78, 0.80),
+        ];
+
+        return Stack(
+          children: [
+            // Custom Painter for winding road, dashed line & sprouts
+            CustomPaint(
+              size: size,
+              painter: BuddyPathPainter(),
+            ),
+
+            // Stepping Stone Nodes
+            for (int i = 0; i < nodePosList.length; i++)
+              _buildNodeDisk(
+                pos: nodePosList[i],
+                size: size,
+                isActive: i == 4, // 5th node is active
+              ),
+
+            // Sproutly Buddy Mascot standing on Node 5 (active node)
+            Positioned(
+              left: nodePosList[4].dx * size.width - 65,
+              top: nodePosList[4].dy * size.height - 115,
+              child: SizedBox(
+                width: 130,
+                height: 130,
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    Image.asset(
+                      'assets/images/Bahagia.png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
+                    ),
+                    const Positioned(
+                      top: 10,
+                      left: -2,
+                      child: Text('✨', style: TextStyle(fontSize: 20)),
+                    ),
+                    const Positioned(
+                      top: 18,
+                      right: -2,
+                      child: Text('✨', style: TextStyle(fontSize: 20)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
 
-  Widget _buildMapChunk(BuildContext context, {required int chunkIndex}) {
-    return AspectRatio(
-      aspectRatio: 10 / 16,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final h = constraints.maxHeight;
+  Widget _buildNodeDisk({required Offset pos, required Size size, bool isActive = false}) {
+    final x = pos.dx * size.width;
+    final y = pos.dy * size.height;
 
-          final nodes = [
-            const Offset(0.65, 0.85),
-            const Offset(0.18, 0.60),
-            const Offset(0.78, 0.35),
-            const Offset(0.20, 0.10),
-          ];
-
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/buddy_background.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-              ...nodes.asMap().entries.map((e) {
-                final isActive = chunkIndex == 0 && e.key == 0;
-
-                return Positioned(
-                  left: e.value.dx * w - 45,
-                  top: e.value.dy * h - 30,
-                  child: _buildNode(isActive: isActive),
-                );
-              }),
-              if (chunkIndex == 0)
-                Positioned(
-                  left: nodes[0].dx * w - 100,
-                  top: nodes[0].dy * h - 220,
-                  child: Image.asset(
-                    'assets/images/Bahagia.png',
-                    width: 200,
-                    height: 250,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-            ],
-          );
-        }
+    return Positioned(
+      left: x - 45,
+      top: y - 25,
+      child: Container(
+        width: 90,
+        height: 50,
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF9ABCB6) : const Color(0xFFB5CCDE),
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: isActive ? const Color(0xFF6C8B85) : const Color(0xFF869EAF),
+              offset: const Offset(0, 8),
+              blurRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              offset: const Offset(0, 10),
+              blurRadius: 6,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNode({bool isActive = false}) {
+  Widget _buildSproutGuideTrigger() {
+    if (_recommendation != null || _analysis != null) {
+      return _buildRecommendationPanel();
+    }
+
     return Container(
-      width: 100,
-      height: 70,
-      decoration: ShapeDecoration(
-        color: isActive ? AppColors.neutral100 : AppColors.teal300,
-        shape: OvalBorder(
-          side: BorderSide(
-            color: isActive ? AppColors.neutral300 : AppColors.teal500,
-            width: 3,
-          ),
-        ),
-        shadows: [
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
           BoxShadow(
-            color: isActive ? AppColors.neutral300 : AppColors.teal500,
-            offset: const Offset(0, 8),
-            blurRadius: 0,
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.peach100,
+              shape: BoxShape.circle,
+            ),
+            child: const Text('✨', style: TextStyle(fontSize: 20)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('SproutGuide AI', style: AppTextStyles.headingS),
+                Text('Rekomendasi aktivitas & analisis', style: AppTextStyles.bodyS),
+                if (_error != null)
+                  Text(_error!, style: AppTextStyles.caption.copyWith(color: AppColors.error)),
+              ],
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.peach500),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.peach500,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Text('Tanya AI', style: AppTextStyles.labelL.copyWith(color: Colors.white)),
+                      ],
+                    ),
+                  ),
+            onSelected: (val) {
+              if (val == 'rec') _fetchRecommendation();
+              if (val == 'analysis') _fetchAnalysis();
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'rec', child: Text('Rekomendasi Aktivitas')),
+              PopupMenuItem(value: 'analysis', child: Text('Analisis Perkembangan')),
+            ],
           ),
         ],
       ),
@@ -189,7 +361,6 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
 
   Widget _buildRecommendationPanel() {
     return Container(
-      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -199,61 +370,15 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
       child: switch ((_recommendation, _analysis)) {
         (final Recommendation rec, _) => _buildRecommendationCard(rec),
         (_, final ProgressAnalysis analysis) => _buildAnalysisCard(analysis),
-        _ => _buildIdleState(),
+        _ => const SizedBox.shrink(),
       },
     );
   }
 
-  Widget _buildIdleState() {
-    if (_isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_error != null) ...[
-          Text(_error!, style: AppTextStyles.bodyS.copyWith(color: AppColors.error)),
-          const SizedBox(height: 8),
-        ],
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.peach500),
-            onPressed: _fetchRecommendation,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CustomIcon(
-                  assetName: 'assets/icons/solar_clipboard-add-outline.svg',
-                  size: 20,
-                  color: AppColors.white,
-                ),
-                const SizedBox(width: 8),
-                Text('Dapatkan Rekomendasi', style: AppTextStyles.headingM.copyWith(color: AppColors.white)),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _fetchAnalysis,
-            icon: Icon(Icons.insights_outlined, size: 20),
-            label: Text('Analisis Perkembangan'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// RF-10. Framed as input for the parent's decision, never as a verdict.
   Widget _buildAnalysisCard(ProgressAnalysis analysis) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text('Analisis Perkembangan', style: AppTextStyles.headingM),
         const SizedBox(height: 8),
@@ -284,7 +409,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
           width: double.infinity,
           child: OutlinedButton(
             onPressed: () => setState(() => _analysis = null),
-            child: Text('Tutup'),
+            child: const Text('Tutup'),
           ),
         ),
       ],
@@ -315,6 +440,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
     final catalogItem = ActivityCatalog.byId(rec.activityId, custom);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
@@ -345,8 +471,6 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
         const SizedBox(height: 8),
         Text(rec.reason, style: AppTextStyles.bodyM),
         const SizedBox(height: 8),
-        // The AI advises a prompting strategy; the parent decides whether to use
-        // it. Showing it is the whole point of a decision-support system.
         Row(
           children: [
             Icon(Icons.tips_and_updates_outlined, size: 18, color: AppColors.teal500),
@@ -365,7 +489,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => setState(() => _recommendation = null),
-                child: Text('Abaikan'),
+                child: const Text('Abaikan'),
               ),
             ),
             const SizedBox(width: 12),
@@ -373,7 +497,7 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
               child: FilledButton(
                 style: FilledButton.styleFrom(backgroundColor: AppColors.teal500),
                 onPressed: () => _acceptRecommendation(rec),
-                child: Text('Tambahkan'),
+                child: const Text('Tambahkan'),
               ),
             ),
           ],
@@ -434,10 +558,113 @@ class _BuddyPageState extends ConsumerState<BuddyPage> {
     await ref.read(scheduleServiceProvider).saveSchedule(updated);
 
     if (mounted) {
-      setState(() => _recommendation = null);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${catalogItem.title} ditambahkan ke ${schedule.title}.')),
+        SnackBar(content: Text('${catalogItem.title} berhasil ditambahkan ke ${schedule.title}!')),
       );
+      setState(() => _recommendation = null);
     }
   }
+}
+
+class BuddyPathPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // 1. Background fill
+    final bgPaint = Paint()..color = const Color(0xFF7EA29C);
+    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), bgPaint);
+
+    // 2. Define path control points
+    final p0 = Offset(w * 0.40, -h * 0.05);
+    final p1 = Offset(w * 0.50, h * 0.16); // Node 1
+    final p2 = Offset(w * 0.80, h * 0.32); // Node 2
+    final p3 = Offset(w * 0.20, h * 0.48); // Node 3
+    final p4 = Offset(w * 0.50, h * 0.64); // Node 4
+    final p5 = Offset(w * 0.78, h * 0.80); // Node 5 (active)
+    final p6 = Offset(w * 0.50, h * 1.05);
+
+    final path = Path();
+    path.moveTo(p0.dx, p0.dy);
+
+    path.cubicTo(w * 0.45, h * 0.05, w * 0.45, h * 0.09, p1.dx, p1.dy);
+    path.cubicTo(w * 0.65, h * 0.22, w * 0.85, h * 0.25, p2.dx, p2.dy);
+    path.cubicTo(w * 0.75, h * 0.40, w * 0.25, h * 0.40, p3.dx, p3.dy);
+    path.cubicTo(w * 0.15, h * 0.56, w * 0.35, h * 0.58, p4.dx, p4.dy);
+    path.cubicTo(w * 0.70, h * 0.70, w * 0.85, h * 0.74, p5.dx, p5.dy);
+    path.cubicTo(w * 0.70, h * 0.90, w * 0.55, h * 0.98, p6.dx, p6.dy);
+
+    // Cream Ribbon path
+    final ribbonPaint = Paint()
+      ..color = const Color(0xFFE8DFC0)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w > 600 ? 160 : 110
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, ribbonPaint);
+
+    // Dashed center line in terracotta color
+    final dashedPaint = Paint()
+      ..color = const Color(0xFFC4806C)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5;
+
+    final pathMetrics = path.computeMetrics();
+    for (final metric in pathMetrics) {
+      double distance = 0.0;
+      const double dashWidth = 14.0;
+      const double dashSpace = 10.0;
+      bool draw = true;
+      while (distance < metric.length) {
+        final len = draw ? dashWidth : dashSpace;
+        if (draw) {
+          canvas.drawPath(
+            metric.extractPath(distance, (distance + len).clamp(0, metric.length)),
+            dashedPaint,
+          );
+        }
+        distance += len;
+        draw = !draw;
+      }
+    }
+
+    // Sprouts decoration in grass areas
+    _drawSprout(canvas, Offset(w * 0.12, h * 0.28));
+    _drawSprout(canvas, Offset(w * 0.85, h * 0.46));
+    _drawSprout(canvas, Offset(w * 0.10, h * 0.74));
+    _drawSprout(canvas, Offset(w * 0.48, h * 0.75));
+  }
+
+  void _drawSprout(Canvas canvas, Offset center) {
+    final paint = Paint()
+      ..color = const Color(0xFF6B8B75)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..color = const Color(0xFF9DB8A0)
+      ..style = PaintingStyle.fill;
+
+    // Stem
+    canvas.drawLine(center, Offset(center.dx, center.dy - 20), paint);
+
+    // Left leaf
+    final leftLeaf = Path()
+      ..moveTo(center.dx, center.dy - 16)
+      ..cubicTo(center.dx - 12, center.dy - 24, center.dx - 16, center.dy - 12, center.dx, center.dy - 16);
+    canvas.drawPath(leftLeaf, fillPaint);
+    canvas.drawPath(leftLeaf, paint);
+
+    // Right leaf
+    final rightLeaf = Path()
+      ..moveTo(center.dx, center.dy - 18)
+      ..cubicTo(center.dx + 12, center.dy - 26, center.dx + 16, center.dy - 14, center.dx, center.dy - 18);
+    canvas.drawPath(rightLeaf, fillPaint);
+    canvas.drawPath(rightLeaf, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

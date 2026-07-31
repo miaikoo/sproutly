@@ -42,4 +42,7 @@ class AppRoutes {
   static const report = '/analytics/report';
 
   static const therapist = '/therapist';
+
+  static const companionStore = '/buddy/store';
+  static const manageActivities = '/settings/activities';
 }
