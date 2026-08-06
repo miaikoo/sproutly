@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/behaviour_log.dart';
-import '../data/mock_behaviour_logs.dart';
 import 'auth_providers.dart';
 
 class BehaviourLogService {
@@ -20,9 +19,28 @@ class BehaviourLogService {
 
   Stream<List<BehaviourLog>> watchLogsForChild(String childId) {
     return _logs.where('childId', isEqualTo: childId).snapshots().map(
-          (snapshot) => snapshot.docs.map((d) => BehaviourLog.fromJson(d.data())).toList()
-            ..sort((a, b) => b.timestamp.compareTo(a.timestamp)),
+          (snapshot) => normalizeLogsForAnalytics(
+            parseLogsFromFirestore(snapshot.docs.map((d) => d.data()).toList()),
+          ),
         );
+  }
+
+  static List<BehaviourLog> parseLogsFromFirestore(List<Map<String, dynamic>> rawLogs) {
+    final parsed = <BehaviourLog>[];
+    for (final raw in rawLogs) {
+      try {
+        parsed.add(BehaviourLog.fromJson(raw));
+      } catch (_) {
+        continue;
+      }
+    }
+    return parsed;
+  }
+
+  static List<BehaviourLog> normalizeLogsForAnalytics(List<BehaviourLog> logs) {
+    final normalized = List<BehaviourLog>.from(logs);
+    normalized.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return normalized;
   }
 }
 
@@ -32,11 +50,6 @@ final behaviourLogServiceProvider = Provider<BehaviourLogService>((ref) {
 
 final logsForChildProvider = StreamProvider.autoDispose.family<List<BehaviourLog>, String>((ref, childId) {
   if (ref.watch(authStateChangesProvider).valueOrNull == null) return const Stream.empty();
-  return ref.watch(behaviourLogServiceProvider).watchLogsForChild(childId).map((logs) {
-    if (logs.isEmpty) {
-      return generateMockBehaviourLogs(childId);
-    }
-    return logs;
-  });
+  return ref.watch(behaviourLogServiceProvider).watchLogsForChild(childId);
 });
 

@@ -70,6 +70,7 @@ final GoRouter appRouter = GoRouter(
   refreshListenable: GoRouterRefreshStream(fb.FirebaseAuth.instance.authStateChanges()),
   redirect: (context, state) {
     final loggedIn = fb.FirebaseAuth.instance.currentUser != null;
+    // final loggedIn = true;
     final isPublicRoute = _publicRoutes.contains(state.matchedLocation);
 
     if (!loggedIn && !isPublicRoute) return AppRoutes.login;
