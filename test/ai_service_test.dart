@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprout_ly_app/core/data/activity_catalog.dart';
 import 'package:sprout_ly_app/core/services/ai_service.dart';
@@ -28,6 +29,75 @@ void main() {
 
     expect(rec.activityId, 'sikat_gigi');
     expect(rec.recommendedPrompt, PromptType.visual);
+  });
+
+  test('extracts JSON from a Gemini-style response payload', () {
+    const content = '{"candidates":[{"content":{"parts":[{"text":"{\\"activityId\\":\\"mandi\\",\\"recommendedPrompt\\":\\"voice\\",\\"confidence\\":0.9,\\"reason\\":\\"Sesuai rutinitas.\\"}"}]}}]}';
+
+    final rec = AiService.parseRecommendation(content, childId: 'child-1');
+
+    expect(rec.activityId, 'mandi');
+    expect(rec.recommendedPrompt, PromptType.voice);
+    expect(rec.confidence, 0.9);
+  });
+
+  test('retries transient 429 errors before succeeding', () async {
+    var attempts = 0;
+
+    final result = await AiService.executeWithRetry<String>(
+      request: () async {
+        attempts++;
+        if (attempts < 3) {
+          throw DioException(
+            requestOptions: RequestOptions(path: '/test'),
+            response: Response(
+              statusCode: 429,
+              requestOptions: RequestOptions(path: '/test'),
+            ),
+            type: DioExceptionType.badResponse,
+          );
+        }
+        return 'ok';
+      },
+      maxAttempts: 3,
+    );
+
+    expect(result, 'ok');
+    expect(attempts, 3);
+  });
+
+  test('builds a local fallback recommendation when AI is unavailable', () {
+    final child = Child(
+      id: 'child-1',
+      parentId: 'parent-1',
+      name: 'Budi',
+      birthDate: DateTime(2020, 1, 1),
+      severity: Severity.moderate,
+      photoUrl: '',
+      preferences: const ['stiker'],
+      interventionTargets: const ['makan mandiri'],
+    );
+
+    final logs = [
+      BehaviourLog(
+        id: 'log-1',
+        childId: 'child-1',
+        activityId: 'makan',
+        timestamp: DateTime(2026, 7, 30),
+        mood: Mood.happy,
+        promptType: PromptType.voice,
+        rewardId: null,
+        transitionDifficulty: TransitionDifficulty.low,
+        completed: true,
+        durationMinutes: 15,
+      ),
+    ];
+
+    final rec = AiService.buildFallbackRecommendation(child, logs);
+
+    expect(rec.childId, 'child-1');
+    expect(rec.activityId, isNotEmpty);
+    expect(rec.reason, contains('Fallback'));
   });
 
   test('falls back to a valid catalog id when activityId is unknown', () {

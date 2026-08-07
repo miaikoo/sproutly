@@ -1,16 +1,20 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
-  static const openRouterChatCompletions = 'https://openrouter.ai/api/v1/chat/completions';
+  static const geminiApiUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+  /// Optional proxy endpoint for production. If you point this to a backend
+  /// function, the Gemini key can live there instead of the app bundle.
+  static const aiProxyUrl = String.fromEnvironment('AI_PROXY_URL', defaultValue: '');
 
   /// Supplied at build time so the key never lands in git:
-  ///   flutter run   --dart-define=OPENROUTER_API_KEY=sk-or-v1-...
-  ///   flutter build apk --dart-define=OPENROUTER_API_KEY=sk-or-v1-...
+  ///   flutter run --dart-define=GEMINI_API_KEY=...
+  ///   flutter build apk --dart-define=GEMINI_API_KEY=...
   ///
-  /// ponytail: still a client-side key — anyone can extract it from the APK.
-  /// Acceptable only because the model below is a free tier with no billing
-  /// exposure. Move the call behind a Cloud Function before any paid model.
-  static const openRouterApiKey = String.fromEnvironment('OPENROUTER_API_KEY');
+  /// For local development, you can also create a .env file and load it in a
+  /// launcher script, but do not commit the actual value.
+  static const geminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
 
-  static const openRouterModel = 'meta-llama/llama-3.3-70b-instruct:free';
+  static const geminiModel = 'gemini-2.0-flash';
 }
