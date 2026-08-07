@@ -81,6 +81,13 @@ dev_dependencies:
   json_serializable: ^6.9.5
   fake_cloud_firestore: ^4.2.0
   firebase_auth_mocks: ^0.15.2
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/Logo.png"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

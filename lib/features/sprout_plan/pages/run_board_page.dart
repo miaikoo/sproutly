@@ -417,6 +417,14 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
 
   Widget _picture(Activity activity, Size available, {required bool wide}) {
     final side = pictureSide(available, wide: wide);
+    
+    String imagePath = activity.icon;
+    if (activity.title.toLowerCase() == 'memakai sepatu' && activity.steps.isNotEmpty) {
+      if (_stepIndex >= 0 && _stepIndex < 5) {
+        imagePath = 'assets/images/Memakai Sepatu - ${_stepIndex + 1}.png';
+      }
+    }
+
     return Container(
       width: side,
       height: side,
@@ -425,7 +433,7 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
         color: AppColors.imagePlate,
         borderRadius: AppRadius.tile,
       ),
-      child: ActivityImage(activity.icon),
+      child: ActivityImage(imagePath),
     );
   }
 
