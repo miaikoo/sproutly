@@ -152,6 +152,21 @@ void main() {
       expect(rows.single.rate, 0.5);
     });
 
+    test('keeps skipped or timed-out attempts visible while leaving them incomplete', () {
+      final rows = activityMastery(
+        [
+          log(at: now, activityId: 'mandi', completed: false),
+          log(at: now, activityId: 'mandi', completed: false),
+        ],
+        {'mandi': 'Mandi'},
+      );
+
+      expect(rows, hasLength(1));
+      expect(rows.single.total, 2);
+      expect(rows.single.done, 0);
+      expect(rows.single.rate, 0.0);
+    });
+
     test('breaks a rate tie by attempt count', () {
       final rows = activityMastery(
         [

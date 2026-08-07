@@ -108,17 +108,20 @@ class AnalyticsPage extends ConsumerWidget {
             ),
           ],
         ),
-        Container(
-          width: 44,
-          height: 44,
-          decoration: const BoxDecoration(
-            color: Color(0xFF7EA29C),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(
-            Icons.calendar_today_rounded,
-            color: Colors.white,
-            size: 20,
+        GestureDetector(
+          onTap: () => context.push(AppRoutes.calendar),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: Color(0xFF7EA29C),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.calendar_today_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
         ),
       ],

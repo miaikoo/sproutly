@@ -28,6 +28,15 @@ const _moodOptions = {
   Mood.upset: ('😢', 'Sedih'),
 };
 
+enum _BoardFlowPhase {
+  waitingCountdown,
+  waitingChoice,
+  emotionConfirm,
+  emotionChoice,
+  emotionRewardChoice,
+  routine,
+}
+
 /// SproutVoice's guided run (RF-06, RF-07): walks the child through a board one
 /// activity at a time, reading each step aloud, and celebrating between
 /// activities. Doc §6.2.
@@ -50,8 +59,17 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
   int _stepIndex = 0;
   bool _isSaving = false;
 
+  Timer? _activityTimeoutTimer;
+  String? _activeTimeoutActivityId;
+  _BoardFlowPhase? _flowPhase;
+  Timer? _waitingTimer;
+  Duration _remainingWait = Duration.zero;
+
   /// Set once the activity is marked done: the parent is being asked how it went.
   bool _askingMood = false;
+
+  /// Tracks if we are in the reward activity of an Emotion Board
+  bool _isRewardPhase = false;
 
   /// Set after the mood is known, so praise matches what actually happened.
   ReinforcementLevel? _celebrating;
@@ -67,6 +85,8 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
 
   @override
   void dispose() {
+    _cancelActivityTimeout();
+    _cancelWaitingTimer();
     _voice.stop();
     super.dispose();
   }
@@ -92,7 +112,101 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
                   return const Center(child: Text('Papan tidak ditemukan.'));
                 }
 
-                _runOrder ??= pendingRunOrder(schedule);
+                if (_runOrder == null) {
+                  if (schedule.type == BoardType.waiting) {
+                    _flowPhase = _BoardFlowPhase.waitingCountdown;
+                  } else if (schedule.type == BoardType.emotion) {
+                    _flowPhase = _BoardFlowPhase.emotionConfirm;
+                  } else {
+                    _flowPhase = _BoardFlowPhase.routine;
+                  }
+                  _runOrder = pendingRunOrder(schedule);
+                }
+
+                if (_flowPhase == _BoardFlowPhase.waitingCountdown) {
+                  _startWaitingCountdown(schedule);
+                  return _WaitingCountdown(
+                    waitMinutes: schedule.waitMinutes ?? 5,
+                    remaining: _remainingWait,
+                    activity: schedule.activities.isNotEmpty ? schedule.activities.first : null,
+                    onSkip: () {
+                      _cancelWaitingTimer();
+                      if (schedule.activities.isNotEmpty) {
+                        _markIncomplete(schedule.activities.first, reason: 'skip');
+                      } else {
+                        setState(() {
+                          _flowPhase = _BoardFlowPhase.waitingChoice;
+                        });
+                      }
+                    },
+                  );
+                }
+                
+                if (_flowPhase == _BoardFlowPhase.waitingChoice) {
+                  final choices = _waitingChoices(schedule);
+                  if (choices.isEmpty) {
+                    return _AllDone(
+                      message: 'Tidak ada aktivitas yang dipilih untuk papan menunggu ini.',
+                      onClose: () => context.pop(),
+                    );
+                  }
+                  return _WaitingChoice(
+                    activities: choices,
+                    onPick: (activity) => _startChoiceActivity(activity),
+                  );
+                }
+
+                if (_flowPhase == _BoardFlowPhase.emotionConfirm) {
+                  if (schedule.activities.isEmpty) {
+                    return _AllDone(
+                      message: 'Tidak ada perasaan yang dipilih.',
+                      onClose: () => context.pop(),
+                    );
+                  }
+                  return _EmotionConfirm(
+                    activity: schedule.activities.first,
+                    onConfirm: () {
+                      setState(() {
+                        _flowPhase = _BoardFlowPhase.emotionChoice;
+                      });
+                    },
+                  );
+                }
+
+                if (_flowPhase == _BoardFlowPhase.emotionChoice) {
+                  if (schedule.activities.length < 3) {
+                    return _AllDone(
+                      message: 'Tidak ada pilihan aktivitas untuk meregulasi emosi.',
+                      onClose: () => context.pop(),
+                    );
+                  }
+                  return _EmotionChoice(
+                    title: 'aku bisa...',
+                    activities: [schedule.activities[1], schedule.activities[2]],
+                    onPick: (activity) {
+                      _isRewardPhase = false;
+                      _startChoiceActivity(activity);
+                    },
+                  );
+                }
+
+                if (_flowPhase == _BoardFlowPhase.emotionRewardChoice) {
+                  if (schedule.activities.length < 5) {
+                    return _AllDone(
+                      message: 'Tidak ada pilihan aktivitas reward.',
+                      onClose: () => context.pop(),
+                    );
+                  }
+                  return _EmotionChoice(
+                    title: 'kemudian aku bisa melakukan...',
+                    activities: [schedule.activities[3], schedule.activities[4]],
+                    onPick: (activity) {
+                      _isRewardPhase = true;
+                      _startChoiceActivity(activity);
+                    },
+                  );
+                }
+
                 final order = _runOrder!;
 
                 if (order.isEmpty) {
@@ -156,6 +270,8 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
     int total,
   ) {
     final steps = activity.steps;
+    _startActivityTimeout(activity);
+
     final hasSteps = steps.isNotEmpty;
     final stepText = hasSteps ? steps[_stepIndex] : 'Ayo lakukan ${activity.title}.';
     final isLastStep = !hasSteps || _stepIndex == steps.length - 1;
@@ -257,16 +373,27 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
                 ),
                 AppSpacing.gapHMD,
                 Expanded(
-                  flex: 2,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _markIncomplete(activity, reason: 'skip'),
+                    icon: Icon(Icons.skip_next_outlined),
+                    label: Text('Lewati'),
+                    style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 18),
                     ),
-                    onPressed: isLastStep ? _markDone : _nextStep,
-                    child: Text(isLastStep ? 'Selesai' : 'Langkah berikutnya'),
                   ),
                 ),
               ],
+            ),
+            AppSpacing.gapSM,
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                ),
+                onPressed: isLastStep ? _markDone : _nextStep,
+                child: Text(isLastStep ? 'Selesai' : 'Langkah berikutnya'),
+              ),
             ),
             // Reserve the row whether or not the back link is shown, so the
             // primary button never shifts under the parent's thumb mid-routine.
@@ -367,11 +494,23 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
   }
 
   void _advance() {
+    _cancelActivityTimeout();
     setState(() {
       _celebrating = null;
       _celebrationPhrase = '';
       _stepIndex = 0;
       _activityIndex++;
+      
+      final schedule = ref.read(scheduleByIdProvider(widget.scheduleId)).valueOrNull;
+      if (schedule != null) {
+        if (schedule.type == BoardType.emotion && _flowPhase == _BoardFlowPhase.routine) {
+          if (!_isRewardPhase && _activityIndex >= _runOrder!.length) {
+            _flowPhase = _BoardFlowPhase.emotionRewardChoice;
+          }
+        } else if (schedule.type == BoardType.waiting && _flowPhase == _BoardFlowPhase.waitingCountdown) {
+          _flowPhase = _BoardFlowPhase.waitingChoice;
+        }
+      }
     });
   }
 
@@ -388,8 +527,131 @@ class _RunBoardPageState extends ConsumerState<RunBoardPage> {
       ),
     );
     if (confirmed == true && context.mounted) {
+      _cancelActivityTimeout();
       unawaited(_voice.stop());
       context.pop();
+    }
+  }
+
+  void _startWaitingCountdown(Schedule schedule) {
+    if (schedule.waitMinutes == null || _waitingTimer != null) return;
+
+    final totalSeconds = (schedule.waitMinutes! * 60).clamp(1, 3600);
+    _remainingWait = Duration(seconds: totalSeconds);
+    _waitingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        if (_remainingWait.inSeconds <= 1) {
+          timer.cancel();
+          _waitingTimer = null;
+          _remainingWait = Duration.zero;
+          
+          if (schedule.activities.isNotEmpty) {
+            _finishActivity(schedule.activities.first, Mood.neutral);
+          } else {
+            _flowPhase = _BoardFlowPhase.waitingChoice;
+          }
+        } else {
+          _remainingWait -= const Duration(seconds: 1);
+        }
+      });
+    });
+  }
+
+  void _cancelWaitingTimer() {
+    _waitingTimer?.cancel();
+    _waitingTimer = null;
+    _remainingWait = Duration.zero;
+  }
+
+  List<Activity> _waitingChoices(Schedule schedule) {
+    if (schedule.type != BoardType.waiting) return const [];
+    return schedule.activities.skip(1).toList();
+  }
+
+  void _startChoiceActivity(Activity activity) {
+    _cancelWaitingTimer();
+    _flowPhase = _BoardFlowPhase.routine;
+    _runOrder = [activity.id];
+    _activityIndex = 0;
+    _stepIndex = 0;
+    _spokenKey = null;
+    _askingMood = false;
+    _celebrating = null;
+    _celebrationPhrase = '';
+    setState(() {});
+  }
+
+  void _startActivityTimeout(Activity activity) {
+    final durationMinutes = activity.endTime.difference(activity.startTime).inMinutes;
+    if (durationMinutes <= 0) return;
+    if (_activeTimeoutActivityId == activity.id) return;
+
+    _cancelActivityTimeout();
+    _activeTimeoutActivityId = activity.id;
+
+    _activityTimeoutTimer = Timer(Duration(minutes: durationMinutes), () {
+      if (!mounted) return;
+      _markIncomplete(activity, reason: 'timeout');
+    });
+  }
+
+  void _cancelActivityTimeout() {
+    _activityTimeoutTimer?.cancel();
+    _activityTimeoutTimer = null;
+    _activeTimeoutActivityId = null;
+  }
+
+  Future<void> _markIncomplete(Activity activity, {required String reason}) async {
+    setState(() => _isSaving = true);
+    try {
+      final child = await ref.read(currentChildProvider.future);
+      if (child == null) throw StateError('Profil anak belum tersedia.');
+
+      final logService = ref.read(behaviourLogServiceProvider);
+      await logService.addLog(BehaviourLog(
+        id: logService.newLogId(),
+        childId: child.id,
+        activityId: activity.id,
+        timestamp: DateTime.now(),
+        mood: Mood.neutral,
+        promptType: PromptType.voice,
+        rewardId: null,
+        transitionDifficulty: TransitionDifficulty.low,
+        completed: false,
+        durationMinutes: 0,
+      ));
+
+      await ref.read(scheduleServiceProvider).setActivityCompleted(
+            scheduleId: widget.scheduleId,
+            activityId: activity.id,
+            completed: false,
+          );
+
+      if (mounted) {
+        setState(() {
+          _askingMood = false;
+          _celebrating = null;
+          _celebrationPhrase = '';
+          _stepIndex = 0;
+          _activityIndex++;
+          
+          final schedule = ref.read(scheduleByIdProvider(widget.scheduleId)).valueOrNull;
+          if (schedule != null) {
+            if (schedule.type == BoardType.emotion && _flowPhase == _BoardFlowPhase.routine) {
+              if (!_isRewardPhase && _activityIndex >= _runOrder!.length) {
+                _flowPhase = _BoardFlowPhase.emotionRewardChoice;
+              }
+            } else if (schedule.type == BoardType.waiting && _flowPhase == _BoardFlowPhase.waitingCountdown) {
+              _flowPhase = _BoardFlowPhase.waitingChoice;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      // ignore errors
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 }
@@ -740,6 +1002,211 @@ class _AllDone extends StatelessWidget {
         FilledButton(
           onPressed: onClose,
           child: Text('Tutup'),
+        ),
+      ],
+    );
+  }
+}
+
+class _WaitingCountdown extends StatelessWidget {
+  const _WaitingCountdown({
+    required this.waitMinutes,
+    required this.remaining,
+    required this.activity,
+    required this.onSkip,
+  });
+
+  final int waitMinutes;
+  final Duration remaining;
+  final Activity? activity;
+  final VoidCallback onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSeconds = (waitMinutes * 60).clamp(1, 3600);
+    final progress = remaining.inSeconds / totalSeconds;
+    final minutes = remaining.inMinutes.toString().padLeft(2, '0');
+    final seconds = (remaining.inSeconds % 60).toString().padLeft(2, '0');
+    final title = activity?.title ?? 'menunggu';
+
+    return _CenteredScrollBody(
+      children: [
+        Text(title, style: AppTextStyles.displayL, textAlign: TextAlign.center),
+        AppSpacing.gapSM,
+        if (activity != null) ...[
+          ActivityImage(activity!.icon),
+          AppSpacing.gapSM,
+        ],
+        SizedBox(
+          width: 240,
+          height: 240,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CircularProgressIndicator(
+                value: progress,
+                strokeWidth: 24,
+                backgroundColor: AppColors.neutral200,
+                color: AppColors.teal500,
+              ),
+              Center(
+                child: Text(
+                  '$minutes:$seconds',
+                  style: AppTextStyles.displayL.copyWith(fontSize: 48),
+                ),
+              ),
+            ],
+          ),
+        ),
+        AppSpacing.gapXXL,
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: onSkip,
+            icon: const Icon(Icons.skip_next_outlined),
+            label: const Text('Lewati'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WaitingChoice extends StatelessWidget {
+  const _WaitingChoice({
+    required this.activities,
+    required this.onPick,
+  });
+
+  final List<Activity> activities;
+  final ValueChanged<Activity> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CenteredScrollBody(
+      children: [
+        const Text(
+          'Waktu menunggu habis!',
+          style: AppTextStyles.displayL,
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.gapSM,
+        const Text(
+          'Sekarang kamu mau melakukan apa?',
+          style: AppTextStyles.bodyM,
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.gapLG,
+        ...activities.map((activity) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    backgroundColor: AppColors.teal500,
+                  ),
+                  onPressed: () => onPick(activity),
+                  icon: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: ActivityImage(activity.icon),
+                  ),
+                  label: Text(activity.title),
+                ),
+              ),
+            )),
+      ],
+    );
+  }
+}
+
+class _EmotionChoice extends StatelessWidget {
+  const _EmotionChoice({
+    required this.title,
+    required this.activities,
+    required this.onPick,
+  });
+
+  final String title;
+  final List<Activity> activities;
+  final ValueChanged<Activity> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CenteredScrollBody(
+      children: [
+        Text(title, style: AppTextStyles.displayL, textAlign: TextAlign.center),
+        AppSpacing.gapSM,
+        const Text(
+          'Apa yang bisa membantumu merasa lebih baik?',
+          style: AppTextStyles.bodyM,
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.gapLG,
+        ...activities.map((activity) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    backgroundColor: AppColors.teal500,
+                  ),
+                  onPressed: () => onPick(activity),
+                  icon: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: ActivityImage(activity.icon),
+                  ),
+                  label: Text(activity.title),
+                ),
+              ),
+            )),
+      ],
+    );
+  }
+}
+
+class _EmotionConfirm extends StatelessWidget {
+  const _EmotionConfirm({
+    required this.activity,
+    required this.onConfirm,
+  });
+
+  final Activity activity;
+  final VoidCallback onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CenteredScrollBody(
+      children: [
+        const Text(
+          'Ketika aku merasa',
+          style: AppTextStyles.displayL,
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.gapXL,
+        ActivityImage(activity.icon),
+        AppSpacing.gapSM,
+        Text(
+          activity.title,
+          style: AppTextStyles.headingL,
+          textAlign: TextAlign.center,
+        ),
+        AppSpacing.gapXXL,
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+            ),
+            onPressed: onConfirm,
+            child: const Text('Lanjut'),
+          ),
         ),
       ],
     );

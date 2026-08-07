@@ -38,6 +38,7 @@ import '../../features/sprout_buddy/pages/buddy_page.dart';
 import '../../features/sprout_buddy/pages/companion_store_page.dart';
 import '../../features/sprout_track/pages/analytics_page.dart';
 import '../../features/sprout_track/pages/report_page.dart';
+import '../../features/sprout_track/pages/calendar_page.dart';
 import '../../features/sprout_link/pages/therapist_page.dart';
 
 import 'app_routes.dart';
@@ -211,6 +212,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.report,
       builder: (_, _) => const ReportPage(),
+    ),
+    GoRoute(
+      path: AppRoutes.calendar,
+      builder: (_, _) => const CalendarPage(),
     ),
     GoRoute(
       path: AppRoutes.therapist,

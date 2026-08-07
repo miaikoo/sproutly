@@ -111,7 +111,6 @@ class BoardDetailPage extends ConsumerWidget {
   /// Schedule and first-then boards are sequences to work through. Waiting and
   /// emotion boards are references the parent shows in the moment.
   bool _isRunnable(Schedule schedule) =>
-      (schedule.type == BoardType.schedule || schedule.type == BoardType.firstThen) &&
       schedule.activities.any((a) => !a.completed);
 
   String _subtitleFor(Schedule schedule, int cardCount) {

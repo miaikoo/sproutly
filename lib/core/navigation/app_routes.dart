@@ -38,8 +38,11 @@ class AppRoutes {
   static const String createWaitingBoard = '/create-waiting-board';
   static const String createEmotionBoard = '/create-emotion-board';
 
+  static const addActivity = '/plan/activity/new';
+
   static const analytics = '/analytics';
   static const report = '/analytics/report';
+  static const calendar = '/analytics/calendar';
 
   static const therapist = '/therapist';
 

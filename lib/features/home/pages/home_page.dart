@@ -17,6 +17,7 @@ import '../../../models/enums.dart';
 import '../../../models/schedule.dart';
 import '../../../shared/widgets/activity_image.dart';
 import '../../sprout_plan/pages/board_editor.dart';
+import '../widgets/sprout_guide_section.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -40,6 +41,8 @@ class HomePage extends ConsumerWidget {
               ),
               children: [
                 _Greeting(child: childAsync.valueOrNull),
+                AppSpacing.gapXL,
+                const SproutGuideSection(),
                 AppSpacing.gapXL,
                 childAsync.when(
                   loading: () => const _PanelSkeleton(),
