@@ -6,24 +6,60 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    match /users/{uid} {
-      allow read, write: if signedIn();
+    function child(childId) {
+      return get(/databases/$(database)/documents/children/$(childId)).data;
     }
 
+    function isParentOf(childId) {
+      return signedIn() && child(childId).parentId == request.auth.uid;
+    }
+
+    function isCareTeamOf(childId) {
+      return signedIn()
+          && (child(childId).parentId == request.auth.uid
+              || child(childId).get('therapistId', null) == request.auth.uid);
+    }
+
+    // Therapist profiles are readable so a parent can find one by email and see
+    // who is linked. Parent profiles stay private to their owner.
+    match /users/{uid} {
+      allow read: if signedIn()
+          && (uid == request.auth.uid || resource.data.role == 'therapist');
+      allow create: if signedIn() && uid == request.auth.uid;
+      allow update: if signedIn() && uid == request.auth.uid
+          && request.resource.data.role == resource.data.role;
+    }
+
+    // Only the parent can link a therapist, so a therapist can't claim a child.
     match /children/{childId} {
-      allow read, write: if signedIn();
+      allow read: if signedIn()
+          && (resource.data.parentId == request.auth.uid
+              || resource.data.get('therapistId', null) == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.parentId == request.auth.uid;
+      allow update: if signedIn() && resource.data.parentId == request.auth.uid
+          && request.resource.data.parentId == resource.data.parentId;
+      allow delete: if signedIn() && resource.data.parentId == request.auth.uid;
     }
 
     match /schedules/{id} {
-      allow read, write: if signedIn();
+      allow read: if isCareTeamOf(resource.data.childId);
+      allow create: if isParentOf(request.resource.data.childId);
+      allow update: if isParentOf(resource.data.childId)
+          && request.resource.data.childId == resource.data.childId;
+      allow delete: if isParentOf(resource.data.childId);
     }
 
+    // Logs and notes are a record of what happened, so they're append-only.
     match /behaviour_logs/{id} {
-      allow read, write: if signedIn();
+      allow read: if isCareTeamOf(resource.data.childId);
+      allow create: if isParentOf(request.resource.data.childId);
     }
 
     match /therapist_notes/{id} {
-      allow read, write: if signedIn();
+      allow read: if isCareTeamOf(resource.data.childId);
+      allow create: if signedIn()
+          && request.resource.data.therapistId == request.auth.uid
+          && child(request.resource.data.childId).get('therapistId', null) == request.auth.uid;
     }
   }
 }
